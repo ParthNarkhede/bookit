@@ -1,59 +1,113 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import DashboardActionCard from '../components/dashboard/DashboardActionCard'
 import MonthStripCalendar from '../components/calendar/MonthStripCalendar'
 import BookingFilters from '../components/calendar/BookingFilters'
+import BookingDetailModal from '../components/calendar/BookingDetailModal'
 import { BookingList } from '../components/calendar/BookingList'
 import {
+  deleteBookingForUser,
   fetchBookingsForDate,
   groupBookingsByEmployee,
+  rescheduleBooking,
+  updateBookingTitle,
 } from '../controllers/bookingController'
 import { subscribeToActiveRooms } from '../controllers/roomController'
 import { formatDisplayDate, toDateKey } from '../utils/dateHelpers'
 
 function AdminDashboardPage({ user }) {
+  const navigate = useNavigate()
   const [selectedDateKey, setSelectedDateKey] = useState(toDateKey(new Date()))
   const [filters, setFilters] = useState({ name: '', email: '', room: '', duration: '' })
   const [rooms, setRooms] = useState([])
   const [bookings, setBookings] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedBooking, setSelectedBooking] = useState(null)
+  const [message, setMessage] = useState('')
+  const [modalError, setModalError] = useState('')
+  const [isProcessing, setIsProcessing] = useState(false)
 
   useEffect(() => {
     const unsubscribe = subscribeToActiveRooms(setRooms)
     return unsubscribe
   }, [])
 
+  const loadBookings = async () => {
+    setIsLoading(true)
+
+    try {
+      const dayBookings = await fetchBookingsForDate(selectedDateKey, filters)
+      setBookings(dayBookings)
+    } catch {
+      setBookings([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   useEffect(() => {
-    let isMounted = true
-
-    const loadBookings = async () => {
-      setIsLoading(true)
-
-      try {
-        const dayBookings = await fetchBookingsForDate(selectedDateKey, filters)
-        if (isMounted) {
-          setBookings(dayBookings)
-        }
-      } catch {
-        if (isMounted) {
-          setBookings([])
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false)
-        }
-      }
-    }
-
     loadBookings()
-    return () => {
-      isMounted = false
-    }
   }, [selectedDateKey, filters])
 
   const groupedEmployees = groupBookingsByEmployee(bookings)
 
+  const handleDelete = async (booking) => {
+    const confirmed = window.confirm('Delete this booking for the employee?')
+    if (!confirmed) {
+      return
+    }
+
+    setIsProcessing(true)
+    const result = await deleteBookingForUser(booking.id, user, true)
+    setIsProcessing(false)
+
+    if (!result.success) {
+      setModalError(result.error)
+      return
+    }
+
+    setSelectedBooking(null)
+    setMessage('Booking deleted.')
+    loadBookings()
+  }
+
+  const handleReschedule = async (booking) => {
+    setIsProcessing(true)
+    const result = await rescheduleBooking(booking.id, user, true)
+    setIsProcessing(false)
+
+    if (!result.success) {
+      setModalError(result.error)
+      return
+    }
+
+    navigate('/calendar', {
+      state: {
+        editBookingId: result.reschedule.editBookingId,
+        booking: result.reschedule.booking,
+        rescheduleMessage: 'Adjust the booking time on the calendar, then save.',
+      },
+    })
+  }
+
+  const handleSaveTitle = async (bookingId, title) => {
+    setIsProcessing(true)
+    const result = await updateBookingTitle(bookingId, title, user, true)
+    setIsProcessing(false)
+
+    if (!result.success) {
+      setModalError(result.error)
+      return result
+    }
+
+    setSelectedBooking(null)
+    setMessage('Booking updated.')
+    loadBookings()
+    return result
+  }
+
   return (
-    <main className="dashboard-shell admin-dashboard-shell">
+    <main className="dashboard-shell admin-dashboard-shell calendar-page-wide">
       <header className="dashboard-page-header">
         <p className="eyebrow">Admin dashboard</p>
         <h1>Hello, {user.name}</h1>
@@ -92,6 +146,8 @@ function AdminDashboardPage({ user }) {
             </div>
           </div>
 
+          {message && <p className="auth-message success">{message}</p>}
+
           {isLoading ? (
             <p className="empty-state">Loading bookings...</p>
           ) : groupedEmployees.length ? (
@@ -105,7 +161,12 @@ function AdminDashboardPage({ user }) {
                   <BookingList
                     bookings={group.bookings}
                     emptyMessage=""
-                    showEmployee={false}
+                    showEmployee
+                    isAdmin
+                    currentUserId={user.uid}
+                    onView={setSelectedBooking}
+                    onReschedule={handleReschedule}
+                    onDelete={handleDelete}
                   />
                 </section>
               ))}
@@ -115,6 +176,18 @@ function AdminDashboardPage({ user }) {
           )}
         </aside>
       </section>
+
+      <BookingDetailModal
+        booking={selectedBooking}
+        isAdmin
+        currentUserId={user.uid}
+        onClose={() => setSelectedBooking(null)}
+        onDelete={handleDelete}
+        onSaveTitle={handleSaveTitle}
+        onReschedule={handleReschedule}
+        isProcessing={isProcessing}
+        errorMessage={modalError}
+      />
     </main>
   )
 }

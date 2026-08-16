@@ -95,6 +95,19 @@ export function isBookingActive(booking, now = Date.now()) {
   return false
 }
 
+export function getSlotStartTimesFromBooking(startTime, endTime) {
+  const times = []
+  let cursor = parseTimeToMinutes(startTime)
+  const end = parseTimeToMinutes(endTime)
+
+  while (cursor < end) {
+    times.push(minutesToTime(cursor))
+    cursor += SLOT_INTERVAL_MINUTES
+  }
+
+  return times
+}
+
 export function getSlotState({
   dateKey,
   startTime,
@@ -103,6 +116,7 @@ export function getSlotState({
   bookings,
   currentUserId,
   selectedStartTimes,
+  excludeBookingId = null,
 }) {
   if (isSlotInPast(dateKey, startTime)) {
     return 'past'
@@ -115,6 +129,7 @@ export function getSlotState({
   const roomBookings = bookings.filter((booking) => booking.roomId === roomId)
   const blockingBooking = roomBookings.find(
     (booking) =>
+      booking.id !== excludeBookingId &&
       isBookingActive(booking) &&
       doTimesOverlap(startTime, endTime, booking.startTime, booking.endTime),
   )

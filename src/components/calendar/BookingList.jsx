@@ -1,43 +1,82 @@
 import { formatDisplayDate, formatTimeRange } from '../../utils/dateHelpers'
 
-function BookingList({ bookings, emptyMessage, showEmployee = false, onCancel }) {
+function BookingList({
+  bookings,
+  emptyMessage,
+  showEmployee = false,
+  currentUserId,
+  isAdmin = false,
+  onView,
+  onReschedule,
+  onDelete,
+}) {
   if (!bookings.length) {
     return <p className="empty-state">{emptyMessage}</p>
   }
 
   return (
     <div className="booking-list">
-      {bookings.map((booking) => (
-        <article key={booking.id} className={`booking-item ${booking.isBusy ? 'is-busy' : ''}`}>
-          <div className="booking-item-main">
-            <h4>{booking.title}</h4>
-            <p>{formatTimeRange(booking.startTime, booking.endTime)}</p>
-            {booking.roomName && !booking.isBusy && (
-              <p className="booking-employee">{booking.roomName}{booking.roomLocation ? ` · ${booking.roomLocation}` : ''}</p>
-            )}
-            {showEmployee && !booking.isBusy && (
-              <p className="booking-employee">
-                {booking.userName} · {booking.userEmail}
-              </p>
-            )}
-            {booking.isBusy && <p className="booking-employee">Slot unavailable</p>}
-          </div>
+      {bookings.map((booking) => {
+        const canManage = isAdmin || booking.userId === currentUserId
 
-          <div className="booking-item-meta">
-            <span>{booking.durationMinutes} min</span>
-            {!booking.isBusy && onCancel && (
-              <button type="button" className="text-button" onClick={() => onCancel(booking.id)}>
-                Cancel
-              </button>
-            )}
-          </div>
-        </article>
-      ))}
+        return (
+          <article key={booking.id} className={`booking-item ${booking.isBusy ? 'is-busy' : ''}`}>
+            <div className="booking-item-main">
+              <h4>{booking.title}</h4>
+              <p>{formatTimeRange(booking.startTime, booking.endTime)}</p>
+              {booking.roomName && !booking.isBusy && (
+                <p className="booking-employee">
+                  {booking.roomName}
+                  {booking.roomLocation ? ` · ${booking.roomLocation}` : ''}
+                </p>
+              )}
+              {showEmployee && !booking.isBusy && (
+                <p className="booking-employee">
+                  {booking.userName} · {booking.userEmail}
+                </p>
+              )}
+              {booking.isBusy && <p className="booking-employee">Slot unavailable</p>}
+            </div>
+
+            <div className="booking-item-meta">
+              <span>{booking.durationMinutes} min</span>
+              {canManage && !booking.isBusy && (
+                <div className="booking-item-actions">
+                  {onView && (
+                    <button type="button" className="text-button" onClick={() => onView(booking)}>
+                      View
+                    </button>
+                  )}
+                  {onReschedule && booking.status === 'confirmed' && (
+                    <button type="button" className="text-button" onClick={() => onReschedule(booking)}>
+                      Reschedule
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button type="button" className="text-button danger-text" onClick={() => onDelete(booking)}>
+                      Delete
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </article>
+        )
+      })}
     </div>
   )
 }
 
-function GroupedBookingList({ groupedBookings, emptyMessage, showEmployee = false, onCancel }) {
+function GroupedBookingList({
+  groupedBookings,
+  emptyMessage,
+  showEmployee = false,
+  currentUserId,
+  isAdmin = false,
+  onView,
+  onReschedule,
+  onDelete,
+}) {
   const dates = Object.keys(groupedBookings)
 
   if (!dates.length) {
@@ -53,7 +92,11 @@ function GroupedBookingList({ groupedBookings, emptyMessage, showEmployee = fals
             bookings={groupedBookings[dateKey]}
             emptyMessage=""
             showEmployee={showEmployee}
-            onCancel={onCancel}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+            onView={onView}
+            onReschedule={onReschedule}
+            onDelete={onDelete}
           />
         </section>
       ))}

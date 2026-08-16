@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -54,6 +55,15 @@ export async function deleteBooking(bookingId) {
   }
 
   await deleteDoc(doc(db, BOOKINGS_COLLECTION, bookingId))
+}
+
+export async function getBookingById(bookingId) {
+  if (!db || !bookingId) {
+    return null
+  }
+
+  const snapshot = await getDoc(doc(db, BOOKINGS_COLLECTION, bookingId))
+  return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null
 }
 
 export async function getBookingsByDate(dateKey) {

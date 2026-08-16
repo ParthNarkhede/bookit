@@ -13,7 +13,8 @@ import {
 } from '../../utils/slotHelpers'
 import { useScrollToCurrentTime } from '../../hooks/useScrollToCurrentTime'
 
-const SLOT_HEIGHT_PX = 28
+const SLOT_HEIGHT_PX = 36
+const TIME_GUTTER_WIDTH = 56
 
 function RoomScheduleGrid({
   rooms,
@@ -22,7 +23,9 @@ function RoomScheduleGrid({
   currentUserId,
   isAdmin,
   selection,
+  editingBookingId,
   onToggleSlot,
+  onBookingClick,
   selectionLocked,
 }) {
   const scrollRef = useRef(null)
@@ -63,10 +66,11 @@ function RoomScheduleGrid({
     [dateKeys, rooms],
   )
 
-  const gridHeight = slots.length * SLOT_HEIGHT_PX
   const currentLineTop = showCurrentTime
     ? ((currentMinutes - DAY_START_HOUR * 60) / SLOT_INTERVAL_MINUTES) * SLOT_HEIGHT_PX
     : null
+
+  const gridTemplateColumns = `${TIME_GUTTER_WIDTH}px repeat(${columns.length}, minmax(140px, 1fr))`
 
   if (!rooms.length) {
     return (
@@ -78,19 +82,20 @@ function RoomScheduleGrid({
 
   return (
     <div className="schedule-grid-shell">
-      <p className="schedule-scroll-hint">Scroll horizontally on mobile to view all room columns.</p>
+      <p className="schedule-scroll-hint">Swipe horizontally to view all rooms on smaller screens.</p>
+
       <div className="schedule-grid-scroll" ref={scrollRef}>
         <div
-          className="schedule-grid-layout"
-          style={{ '--column-count': columns.length, '--slot-height': `${SLOT_HEIGHT_PX}px` }}
+          className="schedule-unified-grid"
+          style={{ minWidth: `${TIME_GUTTER_WIDTH + columns.length * 140}px` }}
         >
-          <div className="schedule-sticky-header">
+          <div className="schedule-header-sticky">
             {dateKeys.length > 1 && (
               <div
-                className="schedule-day-band-row"
-                style={{ gridTemplateColumns: `72px repeat(${columns.length}, minmax(120px, 1fr))` }}
+                className="schedule-header-row"
+                style={{ gridTemplateColumns: gridTemplateColumns }}
               >
-                <div className="schedule-corner-cell" />
+                <div className="schedule-time-header" />
                 {dateKeys.map((dateKey) => (
                   <div
                     key={`day-${dateKey}`}
@@ -108,20 +113,12 @@ function RoomScheduleGrid({
             )}
 
             <div
-              className="schedule-room-header-row"
-              style={{ gridTemplateColumns: `72px repeat(${columns.length}, minmax(120px, 1fr))` }}
+              className="schedule-header-row"
+              style={{ gridTemplateColumns: gridTemplateColumns }}
             >
-              <div className="schedule-corner-cell">Time</div>
+              <div className="schedule-time-header">Time</div>
               {columns.map((column) => (
-                <div
-                  key={column.id}
-                  className="schedule-room-header"
-                  title={`${column.room.description || ''}${
-                    column.room.features?.length
-                      ? `\n${column.room.features.map((f) => `${f.key}: ${f.value}`).join('\n')}`
-                      : ''
-                  }`}
-                >
+                <div key={column.id} className="schedule-room-header">
                   <strong>{column.room.name}</strong>
                   <span>{column.room.location}</span>
                 </div>
@@ -129,123 +126,137 @@ function RoomScheduleGrid({
             </div>
           </div>
 
-          <div
-            className="schedule-grid-body"
-            style={{ gridTemplateColumns: `72px repeat(${columns.length}, minmax(120px, 1fr))` }}
-          >
-            <div className="schedule-time-gutter" style={{ height: `${gridHeight}px` }}>
-              {Array.from(
-                { length: DAY_END_HOUR - DAY_START_HOUR + 1 },
-                (_, index) => DAY_START_HOUR + index,
-              ).map((hour) => (
-                <div
-                  key={hour}
-                  className="schedule-hour-label"
-                  style={{ height: `${(60 / SLOT_INTERVAL_MINUTES) * SLOT_HEIGHT_PX}px` }}
-                >
-                  {String(hour).padStart(2, '0')}
-                </div>
-              ))}
-            </div>
+          <div className="schedule-body-wrap">
+            {showCurrentTime && currentLineTop !== null && currentLineTop >= 0 && (
+              <div
+                className="schedule-current-time-line"
+                style={{ top: `${currentLineTop}px`, left: `${TIME_GUTTER_WIDTH}px` }}
+                data-tick={timeTick}
+              >
+                <span className="schedule-current-time-badge">{minutesToTime(currentMinutes)}</span>
+              </div>
+            )}
 
             <div
-              className="schedule-columns-wrap"
+              className="schedule-unified-body"
               style={{
-                gridColumn: `2 / span ${columns.length}`,
-                height: `${gridHeight}px`,
+                gridTemplateColumns: gridTemplateColumns,
+                gridTemplateRows: `repeat(${slots.length}, ${SLOT_HEIGHT_PX}px)`,
               }}
             >
-              {showCurrentTime && currentLineTop !== null && currentLineTop >= 0 && (
-                <div
-                  className="schedule-current-time-line"
-                  style={{ top: `${currentLineTop}px` }}
-                  aria-hidden="true"
-                  data-tick={timeTick}
-                >
-                  <span>{minutesToTime(currentMinutes)}</span>
-                </div>
-              )}
+              {slots.map((slot, rowIndex) => {
+                const isHourMark = slot.startTime.endsWith(':00')
 
-              <div
-                className="schedule-columns"
-                style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(120px, 1fr))` }}
-              >
-                {columns.map((column) => {
-                  const columnBookings = bookings.filter(
-                    (booking) =>
-                      booking.date === column.dateKey && booking.roomId === column.room.id,
-                  )
+                return (
+                  <div
+                    key={`time-${slot.startTime}`}
+                    className={`schedule-time-cell ${isHourMark ? 'is-hour' : ''}`}
+                    style={{ gridRow: rowIndex + 1, gridColumn: 1 }}
+                  >
+                    {isHourMark ? slot.startTime : ''}
+                  </div>
+                )
+              })}
+
+              {slots.map((slot, rowIndex) =>
+                columns.map((column, colIndex) => {
                   const isSelectedColumn =
                     selection?.dateKey === column.dateKey && selection?.roomId === column.room.id
                   const selectedStartTimes = isSelectedColumn ? selection.selectedStartTimes : []
+                  const isHourMark = slot.startTime.endsWith(':00')
+
+                  const state = getSlotState({
+                    dateKey: column.dateKey,
+                    startTime: slot.startTime,
+                    endTime: slot.endTime,
+                    roomId: column.room.id,
+                    bookings,
+                    currentUserId,
+                    selectedStartTimes,
+                    excludeBookingId: editingBookingId,
+                  })
+                  const isInteractive = state === 'available' || state === 'selected'
 
                   return (
-                    <div key={column.id} className="schedule-room-column">
-                      <div className="schedule-slot-grid">
-                        {slots.map((slot) => {
-                          const state = getSlotState({
-                            dateKey: column.dateKey,
-                            startTime: slot.startTime,
-                            endTime: slot.endTime,
-                            roomId: column.room.id,
-                            bookings: columnBookings,
-                            currentUserId,
-                            selectedStartTimes,
-                          })
-                          const isInteractive = state === 'available' || state === 'selected'
-
-                          return (
-                            <button
-                              key={`${column.id}-${slot.startTime}`}
-                              type="button"
-                              className={`schedule-slot schedule-slot-${state}`}
-                              style={{ height: `${SLOT_HEIGHT_PX}px` }}
-                              disabled={!isInteractive || selectionLocked}
-                              aria-label={`${column.room.name} ${slot.startTime}`}
-                              onClick={() =>
-                                onToggleSlot(column.dateKey, column.room.id, slot.startTime)
-                              }
-                            />
-                          )
-                        })}
-                      </div>
-
-                      {columnBookings.map((booking) => {
-                        const blockStyle = getBookingBlockStyle(
-                          booking.startTime,
-                          booking.endTime,
-                          DAY_START_HOUR,
-                          DAY_END_HOUR,
-                          SLOT_HEIGHT_PX,
-                        )
-
-                        return (
-                          <div
-                            key={booking.id}
-                            className={`schedule-booking-block schedule-booking-${booking.status} ${
-                              booking.isBusy ? 'is-busy' : ''
-                            }`}
-                            style={{ top: blockStyle.top, height: blockStyle.height }}
-                            title={`${booking.title} (${booking.startTime} - ${booking.endTime})`}
-                          >
-                            <strong>{booking.isBusy ? 'Busy' : booking.title}</strong>
-                            <span>
-                              {booking.startTime} – {booking.endTime}
-                            </span>
-                            {!booking.isBusy && (
-                              <small>
-                                {isAdmin
-                                  ? `${booking.userName} · ${booking.roomName || column.room.name}`
-                                  : booking.userName}
-                              </small>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
+                    <button
+                      key={`${column.id}-${slot.startTime}`}
+                      type="button"
+                      className={`schedule-slot schedule-slot-${state} ${isHourMark ? 'is-hour-line' : ''}`}
+                      style={{ gridRow: rowIndex + 1, gridColumn: colIndex + 2 }}
+                      disabled={!isInteractive || selectionLocked}
+                      aria-label={`${column.room.name} ${slot.startTime}`}
+                      onClick={() => onToggleSlot(column.dateKey, column.room.id, slot.startTime)}
+                    />
                   )
-                })}
-              </div>
+                }),
+              )}
+
+              {columns.map((column, colIndex) => {
+                const columnBookings = bookings.filter(
+                  (booking) =>
+                    booking.id !== editingBookingId &&
+                    booking.date === column.dateKey &&
+                    booking.roomId === column.room.id,
+                )
+
+                return (
+                  <div
+                    key={`overlay-${column.id}`}
+                    className="schedule-column-overlay"
+                    style={{
+                      gridColumn: colIndex + 2,
+                      gridRow: `1 / ${slots.length + 1}`,
+                    }}
+                  >
+                    {columnBookings.map((booking) => {
+                      const blockStyle = getBookingBlockStyle(
+                        booking.startTime,
+                        booking.endTime,
+                        DAY_START_HOUR,
+                        DAY_END_HOUR,
+                        SLOT_HEIGHT_PX,
+                      )
+
+                      const displayTitle = booking.isHold
+                        ? 'On hold'
+                        : booking.isBusy
+                          ? 'Booked'
+                          : booking.title
+
+                      const canClick =
+                        isAdmin || booking.userId === currentUserId || !booking.isMasked
+
+                      return (
+                        <button
+                          key={booking.id}
+                          type="button"
+                          className={`schedule-booking-block schedule-booking-${booking.status} ${
+                            booking.isHold ? 'is-hold' : ''
+                          } ${booking.isBusy ? 'is-busy' : ''}`}
+                          style={{ top: blockStyle.top, height: blockStyle.height }}
+                          disabled={!canClick}
+                          onClick={() => onBookingClick?.(booking)}
+                        >
+                          <strong>{displayTitle}</strong>
+                          <span>
+                            {booking.startTime} – {booking.endTime}
+                          </span>
+                          {!booking.isMasked && (
+                            <small>
+                              {isAdmin
+                                ? `${booking.userName} · ${booking.roomName || column.room.name}`
+                                : booking.userName}
+                            </small>
+                          )}
+                          {booking.isHold && booking.isMasked && (
+                            <small>Someone is booking</small>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>

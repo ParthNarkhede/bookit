@@ -3,6 +3,7 @@ import {
   deleteBooking,
   getBookingsByDate,
   getBookingsByUser,
+  getBookingById,
   cancelBooking,
   updateBooking,
   subscribeToBookingsByDate,
@@ -78,11 +79,23 @@ export function maskBookingForEmployee(booking, userId) {
     return booking
   }
 
+  if (booking.status === BOOKING_STATUS.HOLD) {
+    return {
+      ...booking,
+      title: 'On hold',
+      userName: 'Held',
+      userEmail: '',
+      isMasked: true,
+      isHold: true,
+    }
+  }
+
   return {
     ...booking,
-    userName: 'Busy',
-    userEmail: 'busy@slot.booked',
-    title: booking.status === BOOKING_STATUS.HOLD ? 'On hold' : 'Busy',
+    userName: 'Booked',
+    userEmail: '',
+    title: 'Unavailable',
+    isMasked: true,
     isBusy: true,
   }
 }
@@ -190,4 +203,141 @@ export async function releaseSlotHold(holdId) {
 export async function cancelUserBooking(bookingId) {
   await cancelBooking(bookingId)
   return { success: true }
+}
+
+export async function deleteBookingForUser(bookingId, user, isAdmin = false) {
+  if (!bookingId) {
+    return { success: false, error: 'Booking not found.' }
+  }
+
+  try {
+    const booking = await getBookingById(bookingId)
+
+    if (!booking) {
+      return { success: false, error: 'Booking not found.' }
+    }
+
+    if (!isAdmin && booking.userId !== user.uid) {
+      return { success: false, error: 'You can only delete your own bookings.' }
+    }
+
+    if (booking.status === BOOKING_STATUS.HOLD) {
+      await deleteBooking(bookingId)
+    } else {
+      await cancelBooking(bookingId)
+    }
+
+    return { success: true }
+  } catch {
+    return { success: false, error: 'Unable to delete booking.' }
+  }
+}
+
+export async function updateBookingTitle(bookingId, title, user, isAdmin = false) {
+  const trimmedTitle = title?.trim()
+
+  if (!trimmedTitle) {
+    return { success: false, error: 'Title is required.' }
+  }
+
+  try {
+    const booking = await getBookingById(bookingId)
+
+    if (!booking) {
+      return { success: false, error: 'Booking not found.' }
+    }
+
+    if (!isAdmin && booking.userId !== user.uid) {
+      return { success: false, error: 'You can only edit your own bookings.' }
+    }
+
+    if (booking.status !== BOOKING_STATUS.CONFIRMED) {
+      return { success: false, error: 'Only confirmed bookings can be edited.' }
+    }
+
+    await updateBooking(bookingId, { title: trimmedTitle })
+    return { success: true }
+  } catch {
+    return { success: false, error: 'Unable to update booking.' }
+  }
+}
+
+export async function beginEditBooking(bookingId, user, isAdmin = false) {
+  try {
+    const booking = await getBookingById(bookingId)
+
+    if (!booking) {
+      return { success: false, error: 'Booking not found.' }
+    }
+
+    if (!isAdmin && booking.userId !== user.uid) {
+      return { success: false, error: 'You can only edit your own bookings.' }
+    }
+
+    if (booking.status !== BOOKING_STATUS.CONFIRMED) {
+      return { success: false, error: 'Only confirmed bookings can be rescheduled.' }
+    }
+
+    return { success: true, booking }
+  } catch {
+    return { success: false, error: 'Unable to start edit mode.' }
+  }
+}
+
+export async function updateBookingSchedule(
+  bookingId,
+  { dateKey, roomId, roomName, roomLocation, startTime, endTime, durationMinutes },
+  user,
+  isAdmin = false,
+) {
+  try {
+    const booking = await getBookingById(bookingId)
+
+    if (!booking) {
+      return { success: false, error: 'Booking not found.' }
+    }
+
+    if (!isAdmin && booking.userId !== user.uid) {
+      return { success: false, error: 'You can only edit your own bookings.' }
+    }
+
+    const existingBookings = await getBookingsByDate(dateKey)
+
+    if (isSlotTaken(existingBookings, startTime, endTime, roomId, bookingId)) {
+      return { success: false, error: 'One or more selected slots are no longer available.' }
+    }
+
+    await updateBooking(bookingId, {
+      date: dateKey,
+      roomId,
+      roomName,
+      roomLocation,
+      startTime,
+      endTime,
+      durationMinutes,
+    })
+
+    return { success: true }
+  } catch {
+    return { success: false, error: 'Unable to update booking.' }
+  }
+}
+
+/** @deprecated Use beginEditBooking + updateBookingSchedule instead */
+export async function rescheduleBooking(bookingId, user, isAdmin = false) {
+  const result = await beginEditBooking(bookingId, user, isAdmin)
+  if (!result.success) {
+    return result
+  }
+
+  return {
+    success: true,
+    reschedule: {
+      editBookingId: result.booking.id,
+      dateKey: result.booking.date,
+      roomId: result.booking.roomId,
+      title: result.booking.title,
+      booking: result.booking,
+    },
+  }
 }

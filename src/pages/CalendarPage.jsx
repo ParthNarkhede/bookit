@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import SideCalendar from '../components/calendar/SideCalendar'
 import RoomScheduleGrid from '../components/calendar/RoomScheduleGrid'
 import BookingConfirmPopup from '../components/calendar/BookingConfirmPopup'
+import BookingDetailModal from '../components/calendar/BookingDetailModal'
+import SelectionSummaryBar from '../components/calendar/SelectionSummaryBar'
 import {
+  beginEditBooking,
   confirmSlotHold,
   createSlotHold,
+  deleteBookingForUser,
   maskBookingsForEmployee,
   releaseSlotHold,
   subscribeToCalendarBookings,
+  updateBookingSchedule,
+  updateBookingTitle,
 } from '../controllers/bookingController'
 import { subscribeToActiveRooms } from '../controllers/roomController'
 import { formatDisplayDate, getWeekDateKeys, toDateKey } from '../utils/dateHelpers'
@@ -16,29 +22,75 @@ import { getDashboardRoute } from '../utils/dashboardRoutes'
 import {
   areSlotsConsecutive,
   getSelectionRange,
+  getSlotStartTimesFromBooking,
   isSlotInPast,
   toggleSlotSelection,
 } from '../utils/slotHelpers'
 
 function CalendarPage({ user }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const isAdmin = user.role === 'admin'
-  const [selectedDateKey, setSelectedDateKey] = useState(toDateKey(new Date()))
+  const [selectedDateKey, setSelectedDateKey] = useState(
+    location.state?.dateKey || toDateKey(new Date()),
+  )
   const [viewMode, setViewMode] = useState('daily')
   const [rooms, setRooms] = useState([])
   const [bookings, setBookings] = useState([])
-  const [selection, setSelection] = useState({
-    dateKey: toDateKey(new Date()),
-    roomId: '',
-    selectedStartTimes: [],
+  const [editingBooking, setEditingBooking] = useState(location.state?.booking || null)
+  const [selection, setSelection] = useState(() => {
+    const booking = location.state?.booking
+    if (booking) {
+      return {
+        dateKey: booking.date,
+        roomId: booking.roomId,
+        selectedStartTimes: getSlotStartTimesFromBooking(booking.startTime, booking.endTime),
+      }
+    }
+
+    return {
+      dateKey: location.state?.dateKey || toDateKey(new Date()),
+      roomId: location.state?.roomId || '',
+      selectedStartTimes: [],
+    }
   })
   const [activeHold, setActiveHold] = useState(null)
+  const [selectedBooking, setSelectedBooking] = useState(null)
   const [isPopupOpen, setIsPopupOpen] = useState(false)
-  const [title, setTitle] = useState('')
-  const [message, setMessage] = useState('')
+  const [title, setTitle] = useState(location.state?.title || location.state?.booking?.title || '')
+  const [message, setMessage] = useState(location.state?.rescheduleMessage || '')
   const [errorMessage, setErrorMessage] = useState('')
+  const [modalError, setModalError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isPlacingHold, setIsPlacingHold] = useState(false)
+  const [isProcessingBooking, setIsProcessingBooking] = useState(false)
+  const [isSavingEdit, setIsSavingEdit] = useState(false)
+
+  const enterEditMode = useCallback((booking) => {
+    setEditingBooking(booking)
+    setSelectedDateKey(booking.date)
+    setViewMode('daily')
+    setSelection({
+      dateKey: booking.date,
+      roomId: booking.roomId,
+      selectedStartTimes: getSlotStartTimesFromBooking(booking.startTime, booking.endTime),
+    })
+    setTitle(booking.title || '')
+    setMessage('Edit mode: select or deselect slots to change the time, then save.')
+    setErrorMessage('')
+  }, [])
+
+  useEffect(() => {
+    const editBookingId = location.state?.editBookingId
+    const booking = location.state?.booking
+
+    if (!editBookingId || !booking) {
+      return
+    }
+
+    enterEditMode(booking)
+    navigate(location.pathname, { replace: true, state: null })
+  }, [enterEditMode, location.pathname, location.state?.booking, location.state?.editBookingId, navigate])
 
   const weekDateKeys = useMemo(() => getWeekDateKeys(selectedDateKey), [selectedDateKey])
   const visibleDateKeys = viewMode === 'weekly' ? weekDateKeys : [selectedDateKey]
@@ -80,6 +132,20 @@ function CalendarPage({ user }) {
     [rooms, selection.roomId],
   )
 
+  const canBookSelectedSlots =
+    selection.selectedStartTimes.length > 0 &&
+    areSlotsConsecutive(selection.selectedStartTimes) &&
+    selection.roomId &&
+    !activeHold &&
+    !editingBooking
+
+  const canSaveEdit =
+    Boolean(editingBooking) &&
+    selection.selectedStartTimes.length > 0 &&
+    areSlotsConsecutive(selection.selectedStartTimes) &&
+    selection.roomId &&
+    !activeHold
+
   const handleClosePopup = useCallback((expired = false) => {
     setActiveHold((currentHold) => {
       if (currentHold?.id) {
@@ -104,8 +170,77 @@ function CalendarPage({ user }) {
       roomId: '',
       selectedStartTimes: [],
     })
+    setMessage(editingBooking ? 'Edit mode: pick new slots for the selected date.' : '')
+    setErrorMessage('')
+  }
+
+  const handleCancelEdit = () => {
+    setEditingBooking(null)
+    setSelection({
+      dateKey: selectedDateKey,
+      roomId: '',
+      selectedStartTimes: [],
+    })
     setMessage('')
     setErrorMessage('')
+  }
+
+  const handleSaveEditSchedule = async () => {
+    if (!editingBooking || !canSaveEdit) {
+      return
+    }
+
+    const room = rooms.find((entry) => entry.id === selection.roomId)
+
+    if (!room) {
+      setErrorMessage('Selected room is no longer available.')
+      return
+    }
+
+    const range = getSelectionRange(selection.selectedStartTimes)
+    const unchanged =
+      editingBooking.date === selection.dateKey &&
+      editingBooking.roomId === selection.roomId &&
+      editingBooking.startTime === range.startTime &&
+      editingBooking.endTime === range.endTime
+
+    if (unchanged) {
+      setMessage('No changes to save.')
+      return
+    }
+
+    setIsSavingEdit(true)
+    setErrorMessage('')
+
+    const result = await updateBookingSchedule(
+      editingBooking.id,
+      {
+        dateKey: selection.dateKey,
+        roomId: room.id,
+        roomName: room.name,
+        roomLocation: room.location,
+        startTime: range.startTime,
+        endTime: range.endTime,
+        durationMinutes: range.durationMinutes,
+      },
+      user,
+      isAdmin,
+    )
+
+    setIsSavingEdit(false)
+
+    if (!result.success) {
+      setErrorMessage(result.error)
+      return
+    }
+
+    setEditingBooking(null)
+    setSelection({
+      dateKey: selection.dateKey,
+      roomId: '',
+      selectedStartTimes: [],
+    })
+    setMessage('Booking time updated successfully.')
   }
 
   const handleToggleSlot = (dateKey, roomId, startTime) => {
@@ -135,13 +270,17 @@ function CalendarPage({ user }) {
     setErrorMessage('')
   }
 
-  const handleOpenBookingPopup = async () => {
-    if (!selection.selectedStartTimes.length || !selection.roomId) {
-      return
-    }
+  const handleClearSelection = () => {
+    setSelection((current) => ({
+      ...current,
+      roomId: '',
+      selectedStartTimes: [],
+    }))
+    setErrorMessage('')
+  }
 
-    if (!areSlotsConsecutive(selection.selectedStartTimes)) {
-      setErrorMessage('Please select consecutive 15-minute slots in the same room.')
+  const handleOpenBookingPopup = async () => {
+    if (!canBookSelectedSlots) {
       return
     }
 
@@ -175,12 +314,14 @@ function CalendarPage({ user }) {
     }
 
     setActiveHold(holdResult.hold)
-    setSelection({
-      dateKey: selection.dateKey,
+    setSelection((current) => ({
+      ...current,
       roomId: '',
       selectedStartTimes: [],
-    })
-    setTitle('')
+    }))
+    if (!title) {
+      setTitle('')
+    }
     setIsPopupOpen(true)
     setMessage('')
   }
@@ -211,20 +352,85 @@ function CalendarPage({ user }) {
     setMessage('Meeting booked successfully.')
   }
 
-  const canBookSelectedSlots =
-    selection.selectedStartTimes.length > 0 &&
-    areSlotsConsecutive(selection.selectedStartTimes) &&
-    selection.roomId &&
-    !activeHold
+  const handleBookingClick = (booking) => {
+    if (booking.isMasked && !isAdmin) {
+      return
+    }
+
+    setSelectedBooking(booking)
+    setModalError('')
+  }
+
+  const handleDeleteBooking = async (booking) => {
+    const confirmed = window.confirm(
+      booking.status === 'hold'
+        ? 'Release this hold?'
+        : 'Delete this booking? This cannot be undone.',
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsProcessingBooking(true)
+    setModalError('')
+
+    const result = await deleteBookingForUser(booking.id, user, isAdmin)
+
+    setIsProcessingBooking(false)
+
+    if (!result.success) {
+      setModalError(result.error)
+      return
+    }
+
+    setSelectedBooking(null)
+    setMessage('Booking removed successfully.')
+  }
+
+  const handleSaveBookingTitle = async (bookingId, newTitle) => {
+    setIsProcessingBooking(true)
+    setModalError('')
+
+    const result = await updateBookingTitle(bookingId, newTitle, user, isAdmin)
+
+    setIsProcessingBooking(false)
+
+    if (!result.success) {
+      setModalError(result.error)
+      return result
+    }
+
+    setSelectedBooking(null)
+    setMessage('Booking updated successfully.')
+    return result
+  }
+
+  const handleRescheduleBooking = async (booking) => {
+    setIsProcessingBooking(true)
+    setModalError('')
+
+    const result = await beginEditBooking(booking.id, user, isAdmin)
+
+    setIsProcessingBooking(false)
+
+    if (!result.success) {
+      setModalError(result.error)
+      return
+    }
+
+    setSelectedBooking(null)
+    enterEditMode(result.booking)
+  }
 
   return (
-    <main className="dashboard-shell calendar-page-shell">
+    <main className="dashboard-shell calendar-page-shell calendar-page-wide">
       <header className="dashboard-page-header">
         <div>
           <p className="eyebrow">Booking calendar</p>
           <h1>Schedule a meeting</h1>
           <p className="subtitle">
-            Pick a room column, select consecutive 15-minute slots, and confirm within 1 minute.
+            Select consecutive 15-minute slots in any room column. Holds are shown in amber, booked slots in gray.
           </p>
         </div>
         <button
@@ -235,6 +441,21 @@ function CalendarPage({ user }) {
           Back to dashboard
         </button>
       </header>
+
+      <SelectionSummaryBar
+        selection={selection}
+        room={selectedRoom}
+        onClear={handleClearSelection}
+        onBook={handleOpenBookingPopup}
+        isPlacingHold={isPlacingHold}
+        canBook={canBookSelectedSlots}
+        isEditMode={Boolean(editingBooking)}
+        editingTitle={editingBooking?.title}
+        onSaveEdit={handleSaveEditSchedule}
+        onCancelEdit={handleCancelEdit}
+        canSaveEdit={canSaveEdit}
+        isSavingEdit={isSavingEdit}
+      />
 
       <section className="calendar-main-layout">
         <aside className="calendar-left-panel">
@@ -258,20 +479,21 @@ function CalendarPage({ user }) {
               </button>
 
               <div className="view-toggle">
-              <button
-                type="button"
-                className={viewMode === 'daily' ? 'is-active' : ''}
-                onClick={() => setViewMode('daily')}
-              >
-                Daily
-              </button>
-              <button
-                type="button"
-                className={viewMode === 'weekly' ? 'is-active' : ''}
-                onClick={() => setViewMode('weekly')}
-              >
-                Weekly
-              </button>
+                <button
+                  type="button"
+                  className={viewMode === 'daily' ? 'is-active' : ''}
+                  onClick={() => setViewMode('daily')}
+                >
+                  Daily
+                </button>
+                <button
+                  type="button"
+                  className={viewMode === 'weekly' ? 'is-active' : ''}
+                  onClick={() => setViewMode('weekly')}
+                  disabled={Boolean(editingBooking)}
+                >
+                  Weekly
+                </button>
               </div>
             </div>
           </div>
@@ -283,29 +505,14 @@ function CalendarPage({ user }) {
             currentUserId={user.uid}
             isAdmin={isAdmin}
             selection={selection}
+            editingBookingId={editingBooking?.id}
             onToggleSlot={handleToggleSlot}
-            selectionLocked={Boolean(activeHold) || isPlacingHold}
+            onBookingClick={handleBookingClick}
+            selectionLocked={Boolean(activeHold) || isPlacingHold || isSavingEdit}
           />
 
           {errorMessage && <p className="auth-message error">{errorMessage}</p>}
           {message && <p className="auth-message success">{message}</p>}
-
-          {canBookSelectedSlots && (
-            <div className="book-slots-bar">
-              <p>
-                {selectedRoom?.name} · {selection.selectedStartTimes.length} slot
-                {selection.selectedStartTimes.length === 1 ? '' : 's'} selected
-              </p>
-              <button
-                type="button"
-                className="primary-button inline-button"
-                disabled={isPlacingHold}
-                onClick={handleOpenBookingPopup}
-              >
-                {isPlacingHold ? 'Placing hold...' : 'Book the slot'}
-              </button>
-            </div>
-          )}
         </div>
       </section>
 
@@ -322,6 +529,18 @@ function CalendarPage({ user }) {
         onCancel={handleClosePopup}
         isSubmitting={isSubmitting}
         errorMessage={errorMessage}
+      />
+
+      <BookingDetailModal
+        booking={selectedBooking}
+        isAdmin={isAdmin}
+        currentUserId={user.uid}
+        onClose={() => setSelectedBooking(null)}
+        onDelete={handleDeleteBooking}
+        onSaveTitle={handleSaveBookingTitle}
+        onReschedule={handleRescheduleBooking}
+        isProcessing={isProcessingBooking}
+        errorMessage={modalError}
       />
     </main>
   )
