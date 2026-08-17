@@ -3,6 +3,7 @@ import {
   getUserByUid,
   createUserProfile,
 } from '../services/userService'
+import { isEmailEligible, markEligibleUserRegistered } from '../services/eligibleUserService'
 import { persistUserSession, clearUserSession, isSessionValid } from '../services/sessionService'
 import { setSessionCookie, clearSessionCookie } from '../utils/cookies'
 import {
@@ -48,17 +49,14 @@ export async function loginUser(email, password) {
 
   try {
     const firebaseUser = await signInUser(email, password)
-    let userDoc = await getUserByUid(firebaseUser.uid)
+    const userDoc = await getUserByUid(firebaseUser.uid)
 
     if (!userDoc) {
-      const normalizedEmail = email.trim().toLowerCase()
-      await createUserProfile(firebaseUser.uid, {
-        name: deriveNameFromEmail(normalizedEmail),
-        email: normalizedEmail,
-        role: 'employee',
-        session: null,
-        createdAt: Date.now(),
-      })
+      await signOutUser()
+      return {
+        success: false,
+        error: 'No profile found for this account. Please register with an approved email.',
+      }
     }
 
     const profile = await finalizeAuthSession(firebaseUser.uid)
@@ -82,6 +80,14 @@ export async function registerUser(email, password, confirmPassword) {
   const normalizedEmail = email.trim().toLowerCase()
 
   try {
+    const eligible = await isEmailEligible(normalizedEmail)
+    if (!eligible) {
+      return {
+        success: false,
+        error: 'This email is not authorized to set up an account. Contact your administrator to add you as a user first.',
+      }
+    }
+
     const firebaseUser = await registerAuthUser(normalizedEmail, password)
     const existingProfile = await getUserByUid(firebaseUser.uid)
 
@@ -99,6 +105,7 @@ export async function registerUser(email, password, confirmPassword) {
     }
 
     await createUserProfile(firebaseUser.uid, userProfile)
+    await markEligibleUserRegistered(normalizedEmail)
     const profile = await finalizeAuthSession(firebaseUser.uid)
     return { success: true, user: profile }
   } catch (error) {

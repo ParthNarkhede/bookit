@@ -66,6 +66,23 @@ export async function getBookingById(bookingId) {
   return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null
 }
 
+export async function getBookingsInRange(startDateKey, endDateKey) {
+  if (!db) {
+    return []
+  }
+
+  const bookingsQuery = query(
+    collection(db, BOOKINGS_COLLECTION),
+    where('date', '>=', startDateKey),
+    where('date', '<=', endDateKey),
+  )
+
+  const snapshot = await getDocs(bookingsQuery)
+  return filterActiveBookings(
+    mapBookingDocs(snapshot).filter((booking) => booking.status !== BOOKING_STATUS.CANCELLED),
+  )
+}
+
 export async function getBookingsByDate(dateKey) {
   if (!db) {
     return []

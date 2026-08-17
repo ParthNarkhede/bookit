@@ -11,6 +11,8 @@ import ProfilePage from './pages/ProfilePage'
 import EmployeeDashboardPage from './pages/EmployeeDashboardPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import ManageRoomsPage from './pages/ManageRoomsPage'
+import ManageUsersPage from './pages/ManageUsersPage'
+import AdminAnalyticsPage from './pages/AdminAnalyticsPage'
 import CalendarPage from './pages/CalendarPage'
 import { auth } from './firebase'
 import { logoutUser } from './controllers/authController'
@@ -111,6 +113,24 @@ function App() {
           element={
             <ProtectedRoute user={user}>
               <CalendarPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute user={user} allowedRoles={['admin']}>
+              <ManageUsersPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/analytics"
+          element={
+            <ProtectedRoute user={user} allowedRoles={['admin']}>
+              <AdminAnalyticsPage />
             </ProtectedRoute>
           }
         />

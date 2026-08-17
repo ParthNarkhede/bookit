@@ -15,7 +15,15 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && currentUserDoc().data.role == 'admin';
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && currentUserDoc().data.role == 'admin';
+    }
+
+    function isEligibleUserEmail(emailValue) {
+      return emailValue is string
+        && exists(/databases/$(database)/documents/eligibleUsers/$(emailValue.lower()))
+        && get(/databases/$(database)/documents/eligibleUsers/$(emailValue.lower())).data.email == emailValue.lower()
+        && get(/databases/$(database)/documents/eligibleUsers/$(emailValue.lower())).data.registeredAt == null;
     }
 
     function isValidBookingStatus(status) {
@@ -24,7 +32,13 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create, update: if isOwner(userId);
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.email is string
+        && request.resource.data.email.lower() == request.auth.token.email.lower()
+        && request.resource.data.role in ['employee', 'admin']
+        && isEligibleUserEmail(request.resource.data.email);
+      allow update: if isOwner(userId);
       allow delete: if false;
     }
 
@@ -43,6 +57,19 @@ service cloud.firestore {
         && (resource.data.userId == request.auth.uid || isAdmin());
       allow delete: if isSignedIn()
         && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /eligibleUsers/{emailId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow delete: if isAdmin() && resource.data.registeredAt == null;
+      allow update: if isAdmin()
+        || (
+          isSignedIn()
+          && emailId == request.auth.token.email.lower()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['registeredAt'])
+          && request.resource.data.registeredAt is number
+        );
     }
   }
 }

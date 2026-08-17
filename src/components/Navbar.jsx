@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { getDashboardRoute } from '../utils/dashboardRoutes'
 import ProfileDropdown from './ProfileDropdown'
+import assets from '../assets/asset'
 
 function Navbar({ user, onLogout }) {
   const dashboardRoute = user ? getDashboardRoute(user.role) : '/'
@@ -8,15 +9,28 @@ function Navbar({ user, onLogout }) {
   return (
     <header className="navbar">
       <div className="brand-wrap">
-        <span className="brand-mark">B</span>
+        <div className="brand-mark">
+          <img
+            src={assets.images.roundTableLogo}
+            alt="Bookit"
+          />
+        </div>
+
         <span className="brand-name">Bookit</span>
+        {/* <span className="brand-name">Bookit</span> */}
       </div>
 
       <nav className="nav-links">
-        <Link to="/">Home</Link>
+        {/* <Link to="/">Home</Link> */}
         {user && <Link to={dashboardRoute}>Dashboard</Link>}
         {user && <Link to="/calendar">Calendar</Link>}
-        {user?.role === 'admin' && <Link to="/admin/rooms">Rooms</Link>}
+        {user?.role === 'admin' && (
+          <>
+            <Link to="/admin/rooms">Rooms</Link>
+            <Link to="/admin/users">Users</Link>
+            <Link to="/admin/analytics">Analytics</Link>
+          </>
+        )}
       </nav>
 
       <div className="nav-actions">

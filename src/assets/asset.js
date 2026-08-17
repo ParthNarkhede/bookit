@@ -1,11 +1,13 @@
 import heroImage from './hero.png'
 import reactLogo from './react.svg'
 import viteLogo from './vite.svg'
+import roundTableLogo from './round-table.png'
 
 export const images = {
     heroImage,
     reactLogo,
     viteLogo,
+    roundTableLogo,
 }
 
 export const icons = {

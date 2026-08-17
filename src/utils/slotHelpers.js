@@ -126,7 +126,9 @@ export function getSlotState({
     return 'selected'
   }
 
-  const roomBookings = bookings.filter((booking) => booking.roomId === roomId)
+  const roomBookings = bookings.filter(
+    (booking) => booking.roomId === roomId && booking.date === dateKey,
+  )
   const blockingBooking = roomBookings.find(
     (booking) =>
       booking.id !== excludeBookingId &&

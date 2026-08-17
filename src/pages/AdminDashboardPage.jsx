@@ -128,6 +128,20 @@ function AdminDashboardPage({ user }) {
         to="/admin/rooms"
       />
 
+      <DashboardActionCard
+        title="Manage users"
+        description="Add eligible emails so employees can register. Upload a CSV or Excel list in bulk."
+        buttonLabel="Manage users"
+        to="/admin/users"
+      />
+
+      <DashboardActionCard
+        title="Analytics & export"
+        description="View room usage charts and export booking history to Excel."
+        buttonLabel="Open analytics"
+        to="/admin/analytics"
+      />
+
       <section className="admin-schedule-layout">
         <div className="admin-schedule-main">
           <MonthStripCalendar

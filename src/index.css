@@ -1,41 +1,27 @@
 :root {
+  --dc-navy: #0b1224;
+  --dc-navy-mid: #121a33;
+  --dc-purple: #1a1440;
+  --dc-accent: #2b7fff;
+  --dc-accent-bright: #4da3ff;
+  --dc-white: #ffffff;
+  --dc-gray-50: #f4f6fb;
+  --dc-gray-100: #e8edf5;
+  --dc-gray-300: #94a3b8;
+  --dc-text: #e8edf5;
+  --dc-text-dark: #0f172a;
+  --dc-card: #ffffff;
+  --dc-card-border: rgba(77, 163, 255, 0.15);
+  --dc-gradient: linear-gradient(135deg, #2b7fff 0%, #5b4dff 100%);
+  --dc-page-bg: linear-gradient(180deg, #eef6ff 0%, #f8fafc 100%);
+
   font-family: Inter, 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #111827;
-  background: linear-gradient(180deg, #eef6ff 0%, #f8fafc 100%);
+  color: var(--dc-text-dark);
+  background: var(--dc-page-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-button,
-input,
-textarea {
-  font: inherit;
-}
-
-#root {
-  min-height: 100vh;
-}
-
-h1,
-h2,
-p {
-  margin-top: 0;
 }
