@@ -1,19 +1,19 @@
 :root {
-  --dc-navy: #0b1224;
-  --dc-navy-mid: #121a33;
-  --dc-purple: #1a1440;
-  --dc-accent: #2b7fff;
-  --dc-accent-bright: #4da3ff;
+  --dc-navy: #2b2940;
+  --dc-navy-mid: #2b2940;
+  --dc-purple: #2b2940;
+  --dc-accent: #d11f7a;
+  --dc-accent-bright: #f15aa3;
   --dc-white: #ffffff;
-  --dc-gray-50: #f4f6fb;
-  --dc-gray-100: #e8edf5;
-  --dc-gray-300: #94a3b8;
-  --dc-text: #e8edf5;
-  --dc-text-dark: #0f172a;
+  --dc-gray-50: #f9f9fb;
+  --dc-gray-100: #f1f1f5;
+  --dc-gray-300: #9a9aad;
+  --dc-text: #2b2940;
+  --dc-text-dark: #2b2940;
   --dc-card: #ffffff;
-  --dc-card-border: rgba(77, 163, 255, 0.15);
-  --dc-gradient: linear-gradient(135deg, #2b7fff 0%, #5b4dff 100%);
-  --dc-page-bg: linear-gradient(180deg, #eef6ff 0%, #f8fafc 100%);
+  --dc-card-border: rgba(43, 41, 64, 0.1);
+  --dc-gradient: linear-gradient(135deg, #2b2940 0%, #d11f7a 100%);
+  --dc-page-bg: #ffffff;
 
   font-family: Inter, 'Segoe UI', sans-serif;
   line-height: 1.5;
