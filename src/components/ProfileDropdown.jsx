@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getDashboardRoute } from '../utils/dashboardRoutes'
+import { formatDisplayName } from '../utils/validators'
 
 function ProfileDropdown({ user, onLogout }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -17,8 +18,9 @@ function ProfileDropdown({ user, onLogout }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const initials = user.name
-    ? user.name
+  const displayName = formatDisplayName(user.name)
+  const initials = displayName
+    ? displayName
         .split(' ')
         .map((part) => part[0])
         .join('')
@@ -41,7 +43,7 @@ function ProfileDropdown({ user, onLogout }) {
       {isOpen && (
         <div className="profile-dropdown">
           <div className="profile-dropdown-header">
-            <strong>{user.name}</strong>
+            <strong>{displayName}</strong>
             <span>{user.email}</span>
           </div>
           <Link to="/profile" className="profile-dropdown-link" onClick={() => setIsOpen(false)}>

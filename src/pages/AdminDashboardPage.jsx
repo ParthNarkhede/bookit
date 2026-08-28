@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardActionCard from '../components/dashboard/DashboardActionCard'
+import { formatDisplayName } from '../utils/validators'
 import MonthStripCalendar from '../components/calendar/MonthStripCalendar'
 import BookingFilters from '../components/calendar/BookingFilters'
 import BookingDetailModal from '../components/calendar/BookingDetailModal'
@@ -110,7 +111,7 @@ function AdminDashboardPage({ user }) {
     <main className="dashboard-shell admin-dashboard-shell calendar-page-wide">
       <header className="dashboard-page-header">
         <p className="eyebrow">Admin dashboard</p>
-        <h1>Hello, {user.name}</h1>
+        <h1>Hello, {formatDisplayName(user.name)}</h1>
         <p className="subtitle">Monitor every booking across the team and manage schedules by date.</p>
       </header>
 
@@ -169,7 +170,7 @@ function AdminDashboardPage({ user }) {
               {groupedEmployees.map((group) => (
                 <section key={group.userEmail} className="employee-booking-group">
                   <header>
-                    <h3>{group.userName}</h3>
+                    <h3>{formatDisplayName(group.userName)}</h3>
                     <p>{group.userEmail}</p>
                   </header>
                   <BookingList

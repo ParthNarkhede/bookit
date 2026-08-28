@@ -94,11 +94,42 @@
   border-radius: 12px;
   background: var(--dc-gradient);
   /* color: rgb(54, 177, 196); */
-  color: #d11f7a;
+  /* color: #d11f7a; */
+  color: #ffffff;
   padding: 11px 18px;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+  /* box-shadow: 0 12px 24px rgba(46, 31, 209, 0.18); */
+}
+
+.nav-button{
+  color: #ffffff;
+}
+
+.nav-button:hover,
+.primary-button:hover{
+  color: #d11f7a;
+}
+
+/* .edit-timing{
+  color: #d11f7a;
+} */
+
+.edit-timing{
+  color: #d11f7a;
+  background-color: #ffffff;
+  border: 1px solid #d11f7a;
+  border-radius: 8px;
+  /* background-image: linear-gradient(135deg, #2563eb, #7c3aed); */
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+ 
+}
+
+.edit-timing:hover {
   box-shadow: 0 12px 24px rgba(46, 31, 209, 0.18);
 }
 
@@ -110,8 +141,13 @@
 }
 
 .nav-button.secondary {
+  color: #d11f7a;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nav-button.secondary:hover{
+  border: 1px solid #d11f7a;
 }
 
 .home-shell,
@@ -188,6 +224,10 @@
   color: #d11f7a;
   font-weight: 700;
   cursor: pointer;
+}
+
+.text-button:hover {
+  text-decoration: none;
 }
 
 .auth-form {
@@ -1495,16 +1535,57 @@
   font-size: 0.9rem;
 }
 
+.booking-detail-edit {
+  margin-top: 18px;
+}
+
+.booking-detail-edit label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 700;
+  color: #2b2940;
+}
+
+.booking-detail-edit input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d9d9e5;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  color: #2b2940;
+  background: #ffffff;
+}
+
+.booking-detail-edit input:focus {
+  border-color: #d11f7a;
+  outline: 2px solid rgba(209, 31, 122, 0.12);
+}
+
+.popup-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
 .booking-detail-actions {
   display: flex;
   gap: 10px;
   margin-top: 16px;
 }
 
+
+
 .danger-button {
   background: #fef2f2 !important;
   border: 1px solid #fecaca !important;
   color: #b91c1c !important;
+  /* box-shadow: none !important; */
+}
+
+.danger-button:hover {
+  box-shadow: 0 12px 24px rgba(230, 89, 89, 0.18);
 }
 
 .booking-item-actions {
@@ -1620,6 +1701,9 @@
 
 .danger-text {
   color: #b91c1c;
+}
+.danger-text:hover {
+  text-decoration: underline;
 }
 
 .schedule-empty-state {

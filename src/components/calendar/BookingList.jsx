@@ -1,4 +1,5 @@
 import { formatDisplayDate, formatTimeRange } from '../../utils/dateHelpers'
+import { formatDisplayName } from '../../utils/validators'
 
 function BookingList({
   bookings,
@@ -18,6 +19,7 @@ function BookingList({
     <div className="booking-list">
       {bookings.map((booking) => {
         const canManage = isAdmin || booking.userId === currentUserId
+        const displayUserName = formatDisplayName(booking.userName)
 
         return (
           <article key={booking.id} className={`booking-item ${booking.isBusy ? 'is-busy' : ''}`}>
@@ -32,7 +34,7 @@ function BookingList({
               )}
               {showEmployee && !booking.isBusy && (
                 <p className="booking-employee">
-                  {booking.userName} · {booking.userEmail}
+                  {displayUserName} · {booking.userEmail}
                 </p>
               )}
               {booking.isBusy && <p className="booking-employee">Slot unavailable</p>}

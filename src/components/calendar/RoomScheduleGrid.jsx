@@ -12,6 +12,7 @@ import {
   minutesToTime,
 } from '../../utils/slotHelpers'
 import { useScrollToCurrentTime } from '../../hooks/useScrollToCurrentTime'
+import { formatDisplayName } from '../../utils/validators'
 
 const SLOT_HEIGHT_PX = 36
 const TIME_GUTTER_WIDTH = 56
@@ -222,6 +223,7 @@ function RoomScheduleGrid({
                         : booking.isBusy
                           ? 'Booked'
                           : booking.title
+                      const displayUserName = formatDisplayName(booking.userName)
 
                       const canClick =
                         isAdmin || booking.userId === currentUserId || !booking.isMasked
@@ -244,8 +246,8 @@ function RoomScheduleGrid({
                           {!booking.isMasked && (
                             <small>
                               {isAdmin
-                                ? `${booking.userName} · ${booking.roomName || column.room.name}`
-                                : booking.userName}
+                                ? `${displayUserName} · ${booking.roomName || column.room.name}`
+                                : displayUserName}
                             </small>
                           )}
                           {booking.isHold && booking.isMasked && (

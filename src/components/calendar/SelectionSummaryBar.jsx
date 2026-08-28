@@ -70,7 +70,7 @@ function SelectionSummaryBar({
   if (!hasSelection) {
     return (
       <div className="selection-summary-bar selection-summary-empty">
-        <p>Click consecutive slots in a room column to select a time range.</p>
+        {/* <p>Click consecutive slots in a room column to select a time range.</p> */}
         <div className="schedule-legend">
           <span className="legend-item legend-available">Available</span>
           <span className="legend-item legend-selected">Selected</span>

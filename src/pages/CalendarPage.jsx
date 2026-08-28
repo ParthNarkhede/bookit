@@ -429,9 +429,9 @@ function CalendarPage({ user }) {
         <div>
           <p className="eyebrow">Booking calendar</p>
           <h1>Schedule a meeting</h1>
-          <p className="subtitle">
+          {/* <p className="subtitle">
             Select consecutive 15-minute slots in any room column. Holds are shown in amber, booked slots in gray.
-          </p>
+          </p> */}
         </div>
         <button
           type="button"

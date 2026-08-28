@@ -1,18 +1,20 @@
 import { getDashboardRoute } from '../utils/dashboardRoutes'
+import { formatDisplayName } from '../utils/validators'
 
 function ProfilePage({ user }) {
   const dashboardRoute = getDashboardRoute(user.role)
+  const displayName = formatDisplayName(user.name)
 
   return (
     <main className="dashboard-shell">
       <section className="dashboard-card profile-card">
         <p className="eyebrow">Profile</p>
-        <h1>{user.name}</h1>
+        <h1>{displayName}</h1>
         <p className="subtitle">Your account details and active session information.</p>
 
         <div className="profile-hero">
           <span className="profile-hero-avatar">
-            {user.name
+            {displayName
               .split(' ')
               .map((part) => part[0])
               .join('')
@@ -20,7 +22,7 @@ function ProfilePage({ user }) {
               .toUpperCase()}
           </span>
           <div>
-            <h2>{user.name}</h2>
+            <h2>{displayName}</h2>
             <p>{user.email}</p>
           </div>
         </div>

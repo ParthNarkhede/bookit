@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { formatDisplayDate, formatTimeRange } from '../../utils/dateHelpers'
+import { formatDisplayName } from '../../utils/validators'
 
 function BookingDetailModal({
   booking,
@@ -23,6 +24,7 @@ function BookingDetailModal({
   const canManage = isAdmin || isOwner
   const isConfirmed = booking.status === 'confirmed'
   const isHold = booking.status === 'hold'
+  const displayUserName = formatDisplayName(booking.userName)
 
   const handleSave = async () => {
     const result = await onSaveTitle(booking.id, title)
@@ -70,7 +72,7 @@ function BookingDetailModal({
               <div>
                 <dt>Booked by</dt>
                 <dd>
-                  {booking.userName} ({booking.userEmail})
+                  {displayUserName} ({booking.userEmail})
                 </dd>
               </div>
               <div>
@@ -123,7 +125,7 @@ function BookingDetailModal({
             {isConfirmed && (
               <button
                 type="button"
-                className="nav-button secondary"
+                className="edit-timing"
                 disabled={isProcessing}
                 onClick={() => onReschedule(booking)}
               >
