@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardActionCard from '../components/dashboard/DashboardActionCard'
+import { formatDisplayName } from '../utils/validators'
 import BookingDetailModal from '../components/calendar/BookingDetailModal'
 import { GroupedBookingList } from '../components/calendar/BookingList'
 import {
@@ -98,8 +99,8 @@ function EmployeeDashboardPage({ user }) {
     <main className="dashboard-shell">
       <header className="dashboard-page-header">
         <p className="eyebrow">Employee dashboard</p>
-        <h1>Hello, {user.name}</h1>
-        <p className="subtitle">Book new meetings and manage your upcoming schedule.</p>
+        <h1>Hello, {formatDisplayName(user.name)}</h1>
+        {/* <p className="subtitle">Book new meetings and manage your upcoming schedule.</p> */}
       </header>
 
       <DashboardActionCard
