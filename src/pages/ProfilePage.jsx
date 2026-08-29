@@ -10,7 +10,7 @@ function ProfilePage({ user }) {
       <section className="dashboard-card profile-card">
         <p className="eyebrow">Profile</p>
         <h1>{displayName}</h1>
-        <p className="subtitle">Your account details and active session information.</p>
+        {/* <p className="subtitle">Your account details and active session information.</p> */}
 
         <div className="profile-hero">
           <span className="profile-hero-avatar">
@@ -44,14 +44,14 @@ function ProfilePage({ user }) {
             <span className="meta-label">Session expires</span>
             <span>{new Date(user.session.expiresAt).toLocaleString()}</span>
           </div>
-          <div>
+          {/* <div>
             <span className="meta-label">User ID</span>
             <span className="mono-text">{user.uid}</span>
           </div>
           <div>
             <span className="meta-label">Dashboard</span>
             <span>{dashboardRoute}</span>
-          </div>
+          </div> */}
         </div>
       </section>
     </main>
