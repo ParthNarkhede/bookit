@@ -36,10 +36,10 @@ function ProfilePage({ user }) {
             <span className="meta-label">Role</span>
             <span className="role-chip">{user.role}</span>
           </div>
-          <div>
+          {/* <div>
             <span className="meta-label">Account status</span>
             <span>Active</span>
-          </div>
+          </div> */}
           <div>
             <span className="meta-label">Session expires</span>
             <span>{new Date(user.session.expiresAt).toLocaleString()}</span>
