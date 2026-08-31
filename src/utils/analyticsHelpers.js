@@ -73,11 +73,17 @@ export function computeDayWiseUsage(bookings, dateKeys) {
     }
   })
 
-  return dateKeys.map((key) => ({
-    dateKey: key,
-    minutes: usage[key] || 0,
-    hours: Number(((usage[key] || 0) / 60).toFixed(1)),
-  }))
+  return dateKeys.map((key) => {
+    const minutes = usage[key] || 0
+    const hours = Number((minutes / 60).toFixed(1))
+
+    return {
+      dateKey: key,
+      minutes,
+      hours,
+      label: `${hours.toFixed(1)}h`,
+    }
+  })
 }
 
 export function computeAverageDailyMinutes(dayWiseUsage) {

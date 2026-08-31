@@ -17,6 +17,7 @@ import {
 } from '../controllers/bookingController'
 import { subscribeToActiveRooms } from '../controllers/roomController'
 import { formatDisplayDate, toDateKey } from '../utils/dateHelpers'
+import { isSlotInPast } from '../utils/slotHelpers'
 
 function AdminDashboardPage({ user }) {
   const navigate = useNavigate()
@@ -59,6 +60,8 @@ function AdminDashboardPage({ user }) {
   }, [selectedDateKey, filters])
 
   const groupedEmployees = groupBookingsByEmployee(bookings)
+  const upcomingBookings = myBookings.filter((booking) => !isSlotInPast(booking.date, booking.endTime))
+  const pastBookings = myBookings.filter((booking) => isSlotInPast(booking.date, booking.endTime))
 
   const handleDelete = async (booking) => {
     const confirmed = window.confirm('Delete this booking for the employee?')
@@ -155,20 +158,44 @@ function AdminDashboardPage({ user }) {
         <div className="section-heading">
           <div>
             <p className="eyebrow">Your schedule</p>
-            <h2>My scheduled meetings</h2>
+            <h2>Upcoming meetings</h2>
           </div>
         </div>
+
+        {message && <p className="auth-message success">{message}</p>}
 
         {isLoading ? (
           <p className="empty-state">Loading your meetings...</p>
         ) : (
           <GroupedBookingList
-            groupedBookings={groupBookingsByDate(myBookings)}
-            emptyMessage="You have no scheduled meetings. Use the calendar to book one."
+            groupedBookings={groupBookingsByDate(upcomingBookings)}
+            emptyMessage="No upcoming meetings scheduled. Use the calendar to book your next slot."
             currentUserId={user.uid}
             isAdmin
             onView={setSelectedBooking}
             onReschedule={handleReschedule}
+            onDelete={handleDelete}
+          />
+        )}
+      </section>
+
+      <section className="dashboard-section-card past-bookings-section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Your Booking history</p>
+            <h2>Past meetings</h2>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <p className="empty-state">Loading booking history...</p>
+        ) : (
+          <GroupedBookingList
+            groupedBookings={groupBookingsByDate(pastBookings)}
+            emptyMessage="No past meetings yet."
+            currentUserId={user.uid}
+            isAdmin
+            onView={setSelectedBooking}
             onDelete={handleDelete}
           />
         )}
