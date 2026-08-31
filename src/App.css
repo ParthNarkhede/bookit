@@ -109,7 +109,8 @@
 
 .nav-button:hover,
 .primary-button:hover{
-  color: #d11f7a;
+  /* color: #d11f7a; */
+  color: #ffa7d4;
 }
 
 /* .edit-timing{

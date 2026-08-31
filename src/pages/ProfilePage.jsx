@@ -9,7 +9,7 @@ function ProfilePage({ user }) {
     <main className="dashboard-shell">
       <section className="dashboard-card profile-card">
         <p className="eyebrow">Profile</p>
-        <h1>{displayName}</h1>
+        {/* <h1>{displayName}</h1> */}
         {/* <p className="subtitle">Your account details and active session information.</p> */}
 
         <div className="profile-hero">
@@ -28,10 +28,10 @@ function ProfilePage({ user }) {
         </div>
 
         <div className="dashboard-meta profile-meta">
-          <div>
+          {/* <div>
             <span className="meta-label">Email</span>
             <span>{user.email}</span>
-          </div>
+          </div> */}
           <div>
             <span className="meta-label">Role</span>
             <span className="role-chip">{user.role}</span>
