@@ -161,10 +161,11 @@ function AdminAnalyticsPage() {
                 <div className="column-chart">
                   {dayWise.map((day) => (
                     <div key={day.dateKey} className="column-chart-item">
+                      <span className="column-value">{day.label}</span>
                       <div
                         className="column-bar"
                         style={{ height: `${(day.minutes / maxDayMinutes) * 100}%` }}
-                        title={`${day.hours}h`}
+                        title={day.label}
                       />
                       <span>{formatDisplayDate(day.dateKey).split(',')[0]}</span>
                     </div>

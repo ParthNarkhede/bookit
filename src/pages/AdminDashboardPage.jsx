@@ -5,16 +5,19 @@ import { formatDisplayName } from '../utils/validators'
 import MonthStripCalendar from '../components/calendar/MonthStripCalendar'
 import BookingFilters from '../components/calendar/BookingFilters'
 import BookingDetailModal from '../components/calendar/BookingDetailModal'
-import { BookingList } from '../components/calendar/BookingList'
+import { BookingList, GroupedBookingList } from '../components/calendar/BookingList'
 import {
   deleteBookingForUser,
+  fetchEmployeeBookings,
   fetchBookingsForDate,
   groupBookingsByEmployee,
+  groupBookingsByDate,
   rescheduleBooking,
   updateBookingTitle,
 } from '../controllers/bookingController'
 import { subscribeToActiveRooms } from '../controllers/roomController'
 import { formatDisplayDate, toDateKey } from '../utils/dateHelpers'
+import { isSlotInPast } from '../utils/slotHelpers'
 
 function AdminDashboardPage({ user }) {
   const navigate = useNavigate()
@@ -22,6 +25,7 @@ function AdminDashboardPage({ user }) {
   const [filters, setFilters] = useState({ name: '', email: '', room: '', duration: '' })
   const [rooms, setRooms] = useState([])
   const [bookings, setBookings] = useState([])
+  const [myBookings, setMyBookings] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [message, setMessage] = useState('')
@@ -37,10 +41,15 @@ function AdminDashboardPage({ user }) {
     setIsLoading(true)
 
     try {
-      const dayBookings = await fetchBookingsForDate(selectedDateKey, filters)
+      const [dayBookings, ownBookings] = await Promise.all([
+        fetchBookingsForDate(selectedDateKey, filters),
+        fetchEmployeeBookings(user.uid),
+      ])
       setBookings(dayBookings)
+      setMyBookings(ownBookings)
     } catch {
       setBookings([])
+      setMyBookings([])
     } finally {
       setIsLoading(false)
     }
@@ -51,6 +60,8 @@ function AdminDashboardPage({ user }) {
   }, [selectedDateKey, filters])
 
   const groupedEmployees = groupBookingsByEmployee(bookings)
+  const upcomingBookings = myBookings.filter((booking) => !isSlotInPast(booking.date, booking.endTime))
+  const pastBookings = myBookings.filter((booking) => isSlotInPast(booking.date, booking.endTime))
 
   const handleDelete = async (booking) => {
     const confirmed = window.confirm('Delete this booking for the employee?')
@@ -112,7 +123,7 @@ function AdminDashboardPage({ user }) {
       <header className="dashboard-page-header">
         <p className="eyebrow">Admin dashboard</p>
         <h1>Hello, {formatDisplayName(user.name)}</h1>
-        <p className="subtitle">Monitor every booking across the team and manage schedules by date.</p>
+        {/* <p className="subtitle">Monitor every booking across the team and manage schedules by date.</p> */}
       </header>
 
       <DashboardActionCard
@@ -142,6 +153,53 @@ function AdminDashboardPage({ user }) {
         buttonLabel="Open analytics"
         to="/admin/analytics"
       />
+
+      <section className="dashboard-section-card admin-own-bookings">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Your schedule</p>
+            <h2>Upcoming meetings</h2>
+          </div>
+        </div>
+
+        {message && <p className="auth-message success">{message}</p>}
+
+        {isLoading ? (
+          <p className="empty-state">Loading your meetings...</p>
+        ) : (
+          <GroupedBookingList
+            groupedBookings={groupBookingsByDate(upcomingBookings)}
+            emptyMessage="No upcoming meetings scheduled. Use the calendar to book your next slot."
+            currentUserId={user.uid}
+            isAdmin
+            onView={setSelectedBooking}
+            onReschedule={handleReschedule}
+            onDelete={handleDelete}
+          />
+        )}
+      </section>
+
+      <section className="dashboard-section-card past-bookings-section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Your Booking history</p>
+            <h2>Past meetings</h2>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <p className="empty-state">Loading booking history...</p>
+        ) : (
+          <GroupedBookingList
+            groupedBookings={groupBookingsByDate(pastBookings)}
+            emptyMessage="No past meetings yet."
+            currentUserId={user.uid}
+            isAdmin
+            onView={setSelectedBooking}
+            onDelete={handleDelete}
+          />
+        )}
+      </section>
 
       <section className="admin-schedule-layout">
         <div className="admin-schedule-main">

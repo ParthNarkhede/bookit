@@ -70,7 +70,7 @@
 
 .nav-links a:hover,
 .nav-links a:focus-visible {
-  color: #d11f7a;
+  color: #ffa7d4;
 }
 
 .nav-actions {
@@ -109,7 +109,8 @@
 
 .nav-button:hover,
 .primary-button:hover{
-  color: #d11f7a;
+  /* color: #d11f7a; */
+  color: #ffa7d4;
 }
 
 /* .edit-timing{
@@ -1878,7 +1879,8 @@
 .bar-label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #334155;
+  /* color: #334155; */
+  color: #d11f7a;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1923,6 +1925,14 @@
   justify-content: flex-end;
 }
 
+.column-value {
+  font-size: 0.68rem;
+  font-weight: 700;
+  /* color: var(--dc-accent); */
+  /* color: #d11f7a; */
+  line-height: 1;
+}
+
 .column-bar {
   width: 100%;
   max-width: 36px;
@@ -1933,7 +1943,8 @@
 
 .column-chart-item span {
   font-size: 0.65rem;
-  color: #64748b;
+  /* color: #64748b; */
+  color: #d11f7a;
   text-align: center;
 }
 
