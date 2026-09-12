@@ -106,7 +106,7 @@ function EmployeeDashboardPage({ user }) {
       </header>
 
       <DashboardActionCard
-        title="Proceed to calendar"
+        title="Proceed to book a meeting room"
         description="Pick an available slot and schedule your next meeting in a few clicks."
         buttonLabel="Open calendar"
         to="/calendar"
