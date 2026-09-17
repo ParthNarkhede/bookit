@@ -67,7 +67,12 @@ function BookingDetailModal({
               {booking.roomLocation ? ` · ${booking.roomLocation}` : ''}
             </dd>
           </div>
-          {!booking.isMasked && (
+          {booking.isMasked ? (
+            <div>
+              <dt>{booking.isHold ? 'Held by' : 'Booked by'}</dt>
+              <dd>{displayUserName}</dd>
+            </div>
+          ) : (
             <>
               <div>
                 <dt>Booked by</dt>

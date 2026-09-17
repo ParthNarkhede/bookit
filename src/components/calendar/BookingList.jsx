@@ -37,7 +37,11 @@ function BookingList({
                   {displayUserName} · {booking.userEmail}
                 </p>
               )}
-              {booking.isBusy && <p className="booking-employee">Slot unavailable</p>}
+              {booking.isBusy && (
+                <p className="booking-employee">
+                  {displayUserName ? `Booked by ${displayUserName}` : 'Slot unavailable'}
+                </p>
+              )}
             </div>
 
             <div className="booking-item-meta">

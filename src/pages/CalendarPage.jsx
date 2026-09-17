@@ -23,7 +23,7 @@ import {
   areSlotsConsecutive,
   getSelectionRange,
   getSlotStartTimesFromBooking,
-  isSlotInPast,
+  hasSlotEnded,
   toggleSlotSelection,
 } from '../utils/slotHelpers'
 
@@ -190,6 +190,11 @@ function CalendarPage({ user }) {
       return
     }
 
+    if (selection.selectedStartTimes.some((startTime) => hasSlotEnded(selection.dateKey, startTime))) {
+      setErrorMessage('You cannot book a slot that has already passed.')
+      return
+    }
+
     const room = rooms.find((entry) => entry.id === selection.roomId)
 
     if (!room) {
@@ -248,7 +253,7 @@ function CalendarPage({ user }) {
       return
     }
 
-    if (isSlotInPast(dateKey, startTime)) {
+    if (hasSlotEnded(dateKey, startTime)) {
       setErrorMessage('You cannot book a slot that has already passed.')
       return
     }
@@ -281,6 +286,11 @@ function CalendarPage({ user }) {
 
   const handleOpenBookingPopup = async () => {
     if (!canBookSelectedSlots) {
+      return
+    }
+
+    if (selection.selectedStartTimes.some((startTime) => hasSlotEnded(selection.dateKey, startTime))) {
+      setErrorMessage('You cannot book a slot that has already passed.')
       return
     }
 
@@ -353,7 +363,7 @@ function CalendarPage({ user }) {
   }
 
   const handleBookingClick = (booking) => {
-    if (booking.isMasked && !isAdmin) {
+    if (booking.isHold && booking.isMasked && !isAdmin && !booking.userName) {
       return
     }
 

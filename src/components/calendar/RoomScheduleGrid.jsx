@@ -226,7 +226,11 @@ function RoomScheduleGrid({
                       const displayUserName = formatDisplayName(booking.userName)
 
                       const canClick =
-                        isAdmin || booking.userId === currentUserId || !booking.isMasked
+                        isAdmin ||
+                        booking.userId === currentUserId ||
+                        !booking.isMasked ||
+                        Boolean(booking.isBusy) ||
+                        Boolean(booking.isHold)
 
                       return (
                         <button
@@ -243,16 +247,13 @@ function RoomScheduleGrid({
                           <span>
                             {booking.startTime} – {booking.endTime}
                           </span>
-                          {!booking.isMasked && (
+                          {displayUserName ? (
                             <small>
                               {isAdmin
                                 ? `${displayUserName} · ${booking.roomName || column.room.name}`
                                 : displayUserName}
                             </small>
-                          )}
-                          {booking.isHold && booking.isMasked && (
-                            <small>Someone is booking</small>
-                          )}
+                          ) : null}
                         </button>
                       )
                     })}

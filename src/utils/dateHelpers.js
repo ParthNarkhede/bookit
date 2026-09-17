@@ -13,6 +13,24 @@ export function parseDateKey(dateKey) {
   return new Date(year, month - 1, day)
 }
 
+export function getMonthDays(year, month) {
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const todayKey = toDateKey(new Date())
+
+  return Array.from({ length: daysInMonth }, (_, index) => {
+    const date = new Date(year, month, index + 1)
+
+    return {
+      date,
+      dateKey: toDateKey(date),
+      dayLabel: DAY_LABELS[date.getDay()],
+      dayNumber: date.getDate(),
+      monthLabel: MONTH_LABELS[date.getMonth()],
+      isToday: toDateKey(date) === todayKey,
+    }
+  })
+}
+
 export function getCalendarDays(startDate = new Date(), count = 28) {
   const start = new Date(startDate)
   start.setHours(0, 0, 0, 0)

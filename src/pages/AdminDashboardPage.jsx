@@ -127,7 +127,7 @@ function AdminDashboardPage({ user }) {
       </header>
 
       <DashboardActionCard
-        title="Proceed to calendar"
+        title="Proceed to book a meeting room"
         description="Open the booking calendar to reserve slots or review availability."
         buttonLabel="Open calendar"
         to="/calendar"
