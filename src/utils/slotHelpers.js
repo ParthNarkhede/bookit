@@ -48,7 +48,7 @@ export function isPastDate(dateKey) {
   return dateKey < toDateKey(new Date())
 }
 
-export function isSlotInPast(dateKey, startTime) {
+export function isSlotInPast(dateKey, time) {
   if (isPastDate(dateKey)) {
     return true
   }
@@ -58,7 +58,12 @@ export function isSlotInPast(dateKey, startTime) {
     return false
   }
 
-  return parseTimeToMinutes(startTime) < getCurrentMinutes()
+  return parseTimeToMinutes(time) <= getCurrentMinutes()
+}
+
+export function hasSlotEnded(dateKey, startTime) {
+  const endTime = minutesToTime(parseTimeToMinutes(startTime) + SLOT_INTERVAL_MINUTES)
+  return isSlotInPast(dateKey, endTime)
 }
 
 export function getCurrentMinutes() {
@@ -118,7 +123,7 @@ export function getSlotState({
   selectedStartTimes,
   excludeBookingId = null,
 }) {
-  if (isSlotInPast(dateKey, startTime)) {
+  if (isSlotInPast(dateKey, endTime)) {
     return 'past'
   }
 

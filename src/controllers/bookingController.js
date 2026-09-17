@@ -83,7 +83,6 @@ export function maskBookingForEmployee(booking, userId) {
     return {
       ...booking,
       title: 'On hold',
-      userName: 'Held',
       userEmail: '',
       isMasked: true,
       isHold: true,
@@ -92,9 +91,8 @@ export function maskBookingForEmployee(booking, userId) {
 
   return {
     ...booking,
-    userName: 'Booked',
     userEmail: '',
-    title: 'Unavailable',
+    title: 'Booked',
     isMasked: true,
     isBusy: true,
   }
