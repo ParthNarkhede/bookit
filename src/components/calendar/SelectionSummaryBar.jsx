@@ -68,17 +68,7 @@ function SelectionSummaryBar({
   const hasSelection = selection?.selectedStartTimes?.length > 0 && selection?.roomId
 
   if (!hasSelection) {
-    return (
-      <div className="selection-summary-bar selection-summary-empty">
-        {/* <p>Click consecutive slots in a room column to select a time range.</p> */}
-        <div className="schedule-legend">
-          <span className="legend-item legend-available">Available</span>
-          <span className="legend-item legend-selected">Selected</span>
-          <span className="legend-item legend-hold">On hold</span>
-          <span className="legend-item legend-busy">Booked</span>
-        </div>
-      </div>
-    )
+    return null
   }
 
   const range = getSelectionRange(selection.selectedStartTimes)

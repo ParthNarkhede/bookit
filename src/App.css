@@ -1217,39 +1217,54 @@
 
 .schedule-legend {
   display: flex;
-  gap: 14px;
+  align-items: center;
+  gap: 18px;
   flex-wrap: wrap;
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
 }
 
 .legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-size: 0.78rem;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 999px;
+  color: #334155;
+  white-space: nowrap;
 }
 
-.legend-available {
+.legend-item::before {
+  width: 12px;
+  height: 12px;
+  border: 1px solid;
+  border-radius: 3px;
+  content: '';
+}
+
+.legend-available::before {
+  border-color: #94a3b8;
   background: #fff;
-  border: 1px solid #e2e8f0;
-  color: #475569;
 }
 
-.legend-selected {
-  background: #eff6ff;
-  border: 1px solid #93c5fd;
-  color: #1d4ed8;
+.legend-selected::before {
+  border-color: #2563eb;
+  background: #bfdbfe;
 }
 
-.legend-hold {
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
-  color: #b45309;
+.legend-hold::before {
+  border-color: #d97706;
+  background: #fde68a;
 }
 
-.legend-busy {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #64748b;
+.legend-busy::before {
+  border-color: #94a3b8;
+  background: #cbd5e1;
 }
 
 /* ── Unified schedule grid ── */
@@ -1284,6 +1299,9 @@
 }
 
 .schedule-time-header {
+  position: sticky;
+  left: 0;
+  z-index: 8;
   padding: 10px 8px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -1303,6 +1321,10 @@
   background: #e2e8f0;
 }
 
+.schedule-day-band.has-date-divider {
+  border-right: 3px solid #64748b;
+}
+
 .schedule-room-header {
   display: flex;
   flex-direction: column;
@@ -1310,17 +1332,106 @@
   padding: 10px 12px;
   border-right: 1px solid #e2e8f0;
   background: #f8fafc;
-  min-width: 150px;
+  min-width: 0;
 }
 
-.schedule-room-header strong {
+.schedule-room-header.has-date-divider {
+  border-right: 3px solid #64748b;
+}
+
+.schedule-room-title-row > strong {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
   color: #111827;
   font-size: 0.88rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-room-title-row,
+.room-details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.room-details-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 2px 0;
+  background: transparent;
+  color: #e6007e;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.room-details-button:hover {
+  text-decoration: underline;
 }
 
 .schedule-room-header span {
   color: #64748b;
   font-size: 0.78rem;
+}
+
+.room-details-modal {
+  width: min(520px, 100%);
+  max-height: min(80vh, 720px);
+  overflow: auto;
+  text-align: left;
+}
+
+.room-details-header h3 {
+  margin: 0;
+}
+
+.room-details-header .eyebrow {
+  margin: 0 0 6px;
+}
+
+.room-details-header .text-button {
+  flex: 0 0 auto;
+}
+
+.room-details-location {
+  margin: 14px 0 8px !important;
+  font-weight: 700;
+}
+
+.room-details-description {
+  white-space: pre-wrap;
+}
+
+.room-details-features {
+  display: grid;
+  gap: 8px;
+  margin: 20px 0 0;
+}
+
+.room-details-features > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.room-details-features dt {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.room-details-features dd {
+  margin: 0;
+  text-align: right;
 }
 
 .schedule-body-wrap {
@@ -1346,7 +1457,7 @@
   background: #f8fafc;
   position: sticky;
   left: 0;
-  z-index: 2;
+  z-index: 4;
 }
 
 .schedule-time-cell.is-hour {
@@ -1360,6 +1471,11 @@
   position: relative;
   pointer-events: none;
   z-index: 3;
+}
+
+.schedule-column-overlay.has-date-divider {
+  box-sizing: border-box;
+  border-right: 3px solid #64748b;
 }
 
 .schedule-column-overlay .schedule-booking-block {
@@ -1385,6 +1501,10 @@
 
 .schedule-slot.is-hour-line {
   border-bottom: 1px solid #94a3b8;
+}
+
+.schedule-slot.has-date-divider {
+  border-right: 3px solid #64748b;
 }
 
 .schedule-slot:hover:not(:disabled) {

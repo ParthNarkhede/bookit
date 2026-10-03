@@ -118,7 +118,14 @@ function BookingDetailModal({
                 </div>
               </>
             ) : (
-              <button type="button" className="text-button" onClick={() => setIsEditing(true)}>
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => {
+                  setTitle(booking.title || '')
+                  setIsEditing(true)
+                }}
+              >
                 Edit title
               </button>
             )}

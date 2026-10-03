@@ -21,10 +21,15 @@ import {
   isBookingActive,
   isBookingPast,
   isSlotInPast,
+  isWithinBookingWindow,
   isWeekendDate,
 } from '../utils/slotHelpers'
 
 function getScheduleError(dateKey, startTime, endTime) {
+  if (!isWithinBookingWindow(dateKey)) {
+    return 'Bookings are only available from today through the next three months.'
+  }
+
   if (isWeekendDate(dateKey)) {
     return 'Bookings are unavailable on Saturdays and Sundays.'
   }

@@ -1,5 +1,5 @@
 import { SLOT_INTERVAL_MINUTES } from '../constants/booking.js'
-import { parseDateKey, parseTimeToMinutes } from './dateHelpers.js'
+import { parseDateKey, parseTimeToMinutes, toDateKey } from './dateHelpers.js'
 
 const IST_DATE_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Asia/Kolkata',
@@ -18,6 +18,19 @@ export function getCurrentISTDateKey() {
   const parts = IST_DATE_FORMATTER.formatToParts(new Date())
   const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]))
   return `${values.year}-${values.month}-${values.day}`
+}
+
+export function getBookingWindowEndDateKey() {
+  const today = parseDateKey(getCurrentISTDateKey())
+  const targetMonth = today.getMonth() + 3
+  const lastDayOfTargetMonth = new Date(today.getFullYear(), targetMonth + 1, 0).getDate()
+  return toDateKey(
+    new Date(today.getFullYear(), targetMonth, Math.min(today.getDate(), lastDayOfTargetMonth)),
+  )
+}
+
+export function isWithinBookingWindow(dateKey) {
+  return dateKey >= getCurrentISTDateKey() && dateKey <= getBookingWindowEndDateKey()
 }
 
 export function minutesToTime(totalMinutes) {
@@ -152,6 +165,10 @@ export function getSlotState({
   selectedStartTimes,
   excludeBookingId = null,
 }) {
+  if (!isWithinBookingWindow(dateKey)) {
+    return 'closed'
+  }
+
   if (isWeekendDate(dateKey)) {
     return 'closed'
   }

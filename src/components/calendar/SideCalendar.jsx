@@ -1,16 +1,23 @@
 import { useMemo, useState } from 'react'
 import { getMonthMatrix } from '../../utils/dateHelpers'
-import { getCurrentISTDateKey, isPastDate } from '../../utils/slotHelpers'
+import {
+  getBookingWindowEndDateKey,
+  getCurrentISTDateKey,
+  isWithinBookingWindow,
+} from '../../utils/slotHelpers'
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-function SideCalendar({ selectedDateKey, onSelectDate }) {
+function SideCalendar({ selectedDateKey, monthResetKey, onSelectDate }) {
   const selectedDate = useMemo(() => {
     const [year, month] = selectedDateKey.split('-').map(Number)
     return { year, month: month - 1 }
   }, [selectedDateKey])
 
-  const [visibleMonth, setVisibleMonth] = useState(selectedDate)
+  const [monthOverride, setMonthOverride] = useState(null)
+  const visibleMonth = monthOverride?.dateKey === selectedDateKey && monthOverride?.resetKey === monthResetKey
+    ? monthOverride
+    : selectedDate
 
   const monthCells = useMemo(
     () => getMonthMatrix(visibleMonth.year, visibleMonth.month),
@@ -21,29 +28,52 @@ function SideCalendar({ selectedDateKey, onSelectDate }) {
     undefined,
     { month: 'long', year: 'numeric' },
   )
+  const currentDate = new Date(`${getCurrentISTDateKey()}T00:00:00`)
+  const currentMonthIndex = currentDate.getFullYear() * 12 + currentDate.getMonth()
+  const lastBookableDate = new Date(`${getBookingWindowEndDateKey()}T00:00:00`)
+  const lastBookableMonthIndex = lastBookableDate.getFullYear() * 12 + lastBookableDate.getMonth()
+  const visibleMonthIndex = visibleMonth.year * 12 + visibleMonth.month
 
   const goToPreviousMonth = () => {
-    setVisibleMonth((current) => {
-      const date = new Date(current.year, current.month - 1, 1)
-      return { year: date.getFullYear(), month: date.getMonth() }
+    setMonthOverride((current) => {
+      const visible = current?.dateKey === selectedDateKey && current?.resetKey === monthResetKey
+        ? current
+        : selectedDate
+      const date = new Date(visible.year, visible.month - 1, 1)
+      return { year: date.getFullYear(), month: date.getMonth(), dateKey: selectedDateKey, resetKey: monthResetKey }
     })
   }
 
   const goToNextMonth = () => {
-    setVisibleMonth((current) => {
-      const date = new Date(current.year, current.month + 1, 1)
-      return { year: date.getFullYear(), month: date.getMonth() }
+    setMonthOverride((current) => {
+      const visible = current?.dateKey === selectedDateKey && current?.resetKey === monthResetKey
+        ? current
+        : selectedDate
+      const date = new Date(visible.year, visible.month + 1, 1)
+      return { year: date.getFullYear(), month: date.getMonth(), dateKey: selectedDateKey, resetKey: monthResetKey }
     })
   }
 
   return (
     <section className="side-calendar-card">
       <div className="side-calendar-header">
-        <button type="button" className="calendar-nav-button" onClick={goToPreviousMonth}>
+        <button
+          type="button"
+          className="calendar-nav-button"
+          onClick={goToPreviousMonth}
+          disabled={visibleMonthIndex <= currentMonthIndex}
+          aria-label="Previous month"
+        >
           ‹
         </button>
         <h3>{monthLabel}</h3>
-        <button type="button" className="calendar-nav-button" onClick={goToNextMonth}>
+        <button
+          type="button"
+          className="calendar-nav-button"
+          onClick={goToNextMonth}
+          disabled={visibleMonthIndex >= lastBookableMonthIndex}
+          aria-label="Next month"
+        >
           ›
         </button>
       </div>
@@ -60,7 +90,7 @@ function SideCalendar({ selectedDateKey, onSelectDate }) {
             return <span key={`empty-${index}`} className="side-calendar-empty" />
           }
 
-          const isDisabled = isPastDate(cell.dateKey)
+          const isDisabled = !isWithinBookingWindow(cell.dateKey)
           const isSelected = cell.dateKey === selectedDateKey
 
           return (

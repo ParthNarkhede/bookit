@@ -27,6 +27,7 @@ function AdminDashboardPage({ user }) {
   const [bookings, setBookings] = useState([])
   const [myBookings, setMyBookings] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [hasLoadedBookings, setHasLoadedBookings] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [message, setMessage] = useState('')
   const [modalError, setModalError] = useState('')
@@ -52,6 +53,7 @@ function AdminDashboardPage({ user }) {
       setMyBookings([])
     } finally {
       setIsLoading(false)
+      setHasLoadedBookings(true)
     }
   }
 
@@ -164,7 +166,7 @@ function AdminDashboardPage({ user }) {
 
         {message && <p className="auth-message success">{message}</p>}
 
-        {isLoading ? (
+        {isLoading && !hasLoadedBookings ? (
           <p className="empty-state">Loading your meetings...</p>
         ) : (
           <GroupedBookingList
@@ -187,7 +189,7 @@ function AdminDashboardPage({ user }) {
           </div>
         </div>
 
-        {isLoading ? (
+        {isLoading && !hasLoadedBookings ? (
           <p className="empty-state">Loading booking history...</p>
         ) : (
           <GroupedBookingList
@@ -221,7 +223,7 @@ function AdminDashboardPage({ user }) {
 
           {message && <p className="auth-message success">{message}</p>}
 
-          {isLoading ? (
+          {isLoading && !hasLoadedBookings ? (
             <p className="empty-state">Loading bookings...</p>
           ) : groupedEmployees.length ? (
             <div className="employee-booking-groups">
