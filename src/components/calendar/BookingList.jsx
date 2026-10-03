@@ -1,4 +1,5 @@
 import { formatDisplayDate, formatTimeRange } from '../../utils/dateHelpers'
+import { isBookingPast } from '../../utils/slotHelpers'
 import { formatDisplayName } from '../../utils/validators'
 
 function BookingList({
@@ -19,6 +20,7 @@ function BookingList({
     <div className="booking-list">
       {bookings.map((booking) => {
         const canManage = isAdmin || booking.userId === currentUserId
+        const isPastMeeting = booking.status === 'confirmed' && isBookingPast(booking.date, booking.endTime)
         const displayUserName = formatDisplayName(booking.userName)
 
         return (
@@ -53,12 +55,12 @@ function BookingList({
                       View
                     </button>
                   )}
-                  {onReschedule && booking.status === 'confirmed' && (
+                  {onReschedule && booking.status === 'confirmed' && !isPastMeeting && (
                     <button type="button" className="text-button" onClick={() => onReschedule(booking)}>
                       Reschedule
                     </button>
                   )}
-                  {onDelete && (
+                  {onDelete && !isPastMeeting && (
                     <button type="button" className="text-button danger-text" onClick={() => onDelete(booking)}>
                       Delete
                     </button>

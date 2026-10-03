@@ -17,12 +17,13 @@ import {
   updateBookingTitle,
 } from '../controllers/bookingController'
 import { subscribeToActiveRooms } from '../controllers/roomController'
-import { formatDisplayDate, getWeekDateKeys, toDateKey } from '../utils/dateHelpers'
+import { formatDisplayDate, getWeekDateKeys } from '../utils/dateHelpers'
 import { getDashboardRoute } from '../utils/dashboardRoutes'
 import {
   areSlotsConsecutive,
   getSelectionRange,
   getSlotStartTimesFromBooking,
+  getCurrentISTDateKey,
   hasSlotEnded,
   toggleSlotSelection,
 } from '../utils/slotHelpers'
@@ -32,7 +33,7 @@ function CalendarPage({ user }) {
   const location = useLocation()
   const isAdmin = user.role === 'admin'
   const [selectedDateKey, setSelectedDateKey] = useState(
-    location.state?.dateKey || toDateKey(new Date()),
+    location.state?.dateKey || location.state?.booking?.date || getCurrentISTDateKey(),
   )
   const [viewMode, setViewMode] = useState('daily')
   const [rooms, setRooms] = useState([])
@@ -49,7 +50,7 @@ function CalendarPage({ user }) {
     }
 
     return {
-      dateKey: location.state?.dateKey || toDateKey(new Date()),
+      dateKey: location.state?.dateKey || getCurrentISTDateKey(),
       roomId: location.state?.roomId || '',
       selectedStartTimes: [],
     }
@@ -88,7 +89,6 @@ function CalendarPage({ user }) {
       return
     }
 
-    enterEditMode(booking)
     navigate(location.pathname, { replace: true, state: null })
   }, [enterEditMode, location.pathname, location.state?.booking, location.state?.editBookingId, navigate])
 
@@ -483,7 +483,7 @@ function CalendarPage({ user }) {
               <button
                 type="button"
                 className="text-button"
-                onClick={() => handleDateSelect(toDateKey(new Date()))}
+                onClick={() => handleDateSelect(getCurrentISTDateKey())}
               >
                 Today
               </button>

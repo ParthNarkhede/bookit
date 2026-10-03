@@ -9,9 +9,46 @@ import {
   subscribeToBookingsByDate,
   subscribeToBookingsInRange,
 } from '../services/bookingService'
-import { HOLD_DURATION_MS, BOOKING_STATUS } from '../constants/booking'
-import { getDurationMinutes, sortBookings } from '../utils/dateHelpers'
-import { doTimesOverlap, isBookingActive } from '../utils/slotHelpers'
+import {
+  HOLD_DURATION_MS,
+  BOOKING_STATUS,
+  DAY_END_HOUR,
+  DAY_START_HOUR,
+} from '../constants/booking'
+import { parseTimeToMinutes, sortBookings } from '../utils/dateHelpers'
+import {
+  doTimesOverlap,
+  isBookingActive,
+  isBookingPast,
+  isSlotInPast,
+  isWeekendDate,
+} from '../utils/slotHelpers'
+
+function getScheduleError(dateKey, startTime, endTime) {
+  if (isWeekendDate(dateKey)) {
+    return 'Bookings are unavailable on Saturdays and Sundays.'
+  }
+
+  const startMinutes = parseTimeToMinutes(startTime)
+  const endMinutes = parseTimeToMinutes(endTime)
+  if (
+    !Number.isFinite(startMinutes) ||
+    !Number.isFinite(endMinutes) ||
+    startMinutes % 15 !== 0 ||
+    endMinutes % 15 !== 0 ||
+    startMinutes < DAY_START_HOUR * 60 ||
+    endMinutes > DAY_END_HOUR * 60 ||
+    endMinutes <= startMinutes
+  ) {
+    return 'Bookings are available between 08:00 and 20:00 IST.'
+  }
+
+  if (isSlotInPast(dateKey, startTime)) {
+    return 'You cannot book a slot that has already started.'
+  }
+
+  return ''
+}
 
 export function groupBookingsByDate(bookings) {
   const grouped = {}
@@ -140,6 +177,11 @@ export async function createSlotHold({
   endTime,
   durationMinutes,
 }) {
+  const scheduleError = getScheduleError(dateKey, startTime, endTime)
+  if (scheduleError) {
+    return { success: false, error: scheduleError }
+  }
+
   const existingBookings = await getBookingsByDate(dateKey)
 
   if (isSlotTaken(existingBookings, startTime, endTime, roomId)) {
@@ -176,6 +218,16 @@ export async function confirmSlotHold({ holdId, title }) {
     return { success: false, error: 'Please enter a meeting title.' }
   }
 
+  const hold = await getBookingById(holdId)
+  if (!hold || hold.status !== BOOKING_STATUS.HOLD) {
+    return { success: false, error: 'Booking hold not found.' }
+  }
+
+  const scheduleError = getScheduleError(hold.date, hold.startTime, hold.endTime)
+  if (scheduleError) {
+    return { success: false, error: scheduleError }
+  }
+
   await updateBooking(holdId, {
     title: trimmedTitle,
     status: BOOKING_STATUS.CONFIRMED,
@@ -199,6 +251,15 @@ export async function releaseSlotHold(holdId) {
 }
 
 export async function cancelUserBooking(bookingId) {
+  const booking = await getBookingById(bookingId)
+  if (!booking) {
+    return { success: false, error: 'Booking not found.' }
+  }
+
+  if (booking.status === BOOKING_STATUS.CONFIRMED && isBookingPast(booking.date, booking.endTime)) {
+    return { success: false, error: 'Past bookings cannot be deleted.' }
+  }
+
   await cancelBooking(bookingId)
   return { success: true }
 }
@@ -213,6 +274,10 @@ export async function deleteBookingForUser(bookingId, user, isAdmin = false) {
 
     if (!booking) {
       return { success: false, error: 'Booking not found.' }
+    }
+
+    if (booking.status === BOOKING_STATUS.CONFIRMED && isBookingPast(booking.date, booking.endTime)) {
+      return { success: false, error: 'Past bookings cannot be deleted.' }
     }
 
     if (!isAdmin && booking.userId !== user.uid) {
@@ -253,6 +318,10 @@ export async function updateBookingTitle(bookingId, title, user, isAdmin = false
       return { success: false, error: 'Only confirmed bookings can be edited.' }
     }
 
+    if (isBookingPast(booking.date, booking.endTime)) {
+      return { success: false, error: 'Past bookings cannot be edited.' }
+    }
+
     await updateBooking(bookingId, { title: trimmedTitle })
     return { success: true }
   } catch {
@@ -276,6 +345,14 @@ export async function beginEditBooking(bookingId, user, isAdmin = false) {
       return { success: false, error: 'Only confirmed bookings can be rescheduled.' }
     }
 
+    if (isBookingPast(booking.date, booking.endTime)) {
+      return { success: false, error: 'Past bookings cannot be rescheduled.' }
+    }
+
+    if (isWeekendDate(booking.date)) {
+      return { success: false, error: 'Weekend bookings cannot be rescheduled.' }
+    }
+
     return { success: true, booking }
   } catch {
     return { success: false, error: 'Unable to start edit mode.' }
@@ -297,6 +374,19 @@ export async function updateBookingSchedule(
 
     if (!isAdmin && booking.userId !== user.uid) {
       return { success: false, error: 'You can only edit your own bookings.' }
+    }
+
+    if (booking.status !== BOOKING_STATUS.CONFIRMED) {
+      return { success: false, error: 'Only confirmed bookings can be rescheduled.' }
+    }
+
+    if (isBookingPast(booking.date, booking.endTime)) {
+      return { success: false, error: 'Past bookings cannot be rescheduled.' }
+    }
+
+    const scheduleError = getScheduleError(dateKey, startTime, endTime)
+    if (scheduleError) {
+      return { success: false, error: scheduleError }
     }
 
     const existingBookings = await getBookingsByDate(dateKey)

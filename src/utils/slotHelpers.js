@@ -1,5 +1,24 @@
-import { SLOT_INTERVAL_MINUTES } from '../constants/booking'
-import { parseTimeToMinutes, toDateKey } from './dateHelpers'
+import { SLOT_INTERVAL_MINUTES } from '../constants/booking.js'
+import { parseDateKey, parseTimeToMinutes } from './dateHelpers.js'
+
+const IST_DATE_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Kolkata',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+const IST_TIME_FORMATTER = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Asia/Kolkata',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+})
+
+export function getCurrentISTDateKey() {
+  const parts = IST_DATE_FORMATTER.formatToParts(new Date())
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]))
+  return `${values.year}-${values.month}-${values.day}`
+}
 
 export function minutesToTime(totalMinutes) {
   const hours = Math.floor(totalMinutes / 60)
@@ -45,7 +64,16 @@ export function toggleSlotSelection(selectedStartTimes, startTime) {
 }
 
 export function isPastDate(dateKey) {
-  return dateKey < toDateKey(new Date())
+  return dateKey < getCurrentISTDateKey()
+}
+
+export function isWeekendDate(dateKey) {
+  const day = parseDateKey(dateKey).getDay()
+  return day === 0 || day === 6
+}
+
+export function isBookingPast(dateKey, endTime) {
+  return isSlotInPast(dateKey, endTime)
 }
 
 export function isSlotInPast(dateKey, time) {
@@ -53,7 +81,7 @@ export function isSlotInPast(dateKey, time) {
     return true
   }
 
-  const todayKey = toDateKey(new Date())
+  const todayKey = getCurrentISTDateKey()
   if (dateKey !== todayKey) {
     return false
   }
@@ -67,8 +95,9 @@ export function hasSlotEnded(dateKey, startTime) {
 }
 
 export function getCurrentMinutes() {
-  const now = new Date()
-  return now.getHours() * 60 + now.getMinutes()
+  const parts = IST_TIME_FORMATTER.formatToParts(new Date())
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, Number(value)]))
+  return values.hour * 60 + values.minute
 }
 
 export function getCurrentTimeLinePercent(startHour, endHour) {
@@ -123,7 +152,11 @@ export function getSlotState({
   selectedStartTimes,
   excludeBookingId = null,
 }) {
-  if (isSlotInPast(dateKey, endTime)) {
+  if (isWeekendDate(dateKey)) {
+    return 'closed'
+  }
+
+  if (isSlotInPast(dateKey, startTime)) {
     return 'past'
   }
 

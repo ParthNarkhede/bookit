@@ -4,8 +4,9 @@ import {
   DAY_START_HOUR,
   SLOT_INTERVAL_MINUTES,
 } from '../../constants/booking'
-import { generateTimeSlots, parseDateKey, toDateKey } from '../../utils/dateHelpers'
+import { generateTimeSlots, parseDateKey } from '../../utils/dateHelpers'
 import {
+  getCurrentISTDateKey,
   getBookingBlockStyle,
   getCurrentMinutes,
   getSlotState,
@@ -30,12 +31,12 @@ function RoomScheduleGrid({
   selectionLocked,
 }) {
   const scrollRef = useRef(null)
-  const [timeTick, setTimeTick] = useState(Date.now())
+  const [timeTick, setTimeTick] = useState(() => Date.now())
   const slots = useMemo(
     () => generateTimeSlots(DAY_START_HOUR, DAY_END_HOUR, SLOT_INTERVAL_MINUTES),
     [],
   )
-  const todayKey = toDateKey(new Date())
+  const todayKey = getCurrentISTDateKey()
   const showCurrentTime = dateKeys.includes(todayKey)
   const currentMinutes = getCurrentMinutes()
 
@@ -70,6 +71,7 @@ function RoomScheduleGrid({
   const currentLineTop = showCurrentTime
     ? ((currentMinutes - DAY_START_HOUR * 60) / SLOT_INTERVAL_MINUTES) * SLOT_HEIGHT_PX
     : null
+  const timelineHeight = slots.length * SLOT_HEIGHT_PX
 
   const gridTemplateColumns = `${TIME_GUTTER_WIDTH}px repeat(${columns.length}, minmax(140px, 1fr))`
 
@@ -128,7 +130,7 @@ function RoomScheduleGrid({
           </div>
 
           <div className="schedule-body-wrap">
-            {showCurrentTime && currentLineTop !== null && currentLineTop >= 0 && (
+            {showCurrentTime && currentLineTop !== null && currentLineTop >= 0 && currentLineTop < timelineHeight && (
               <div
                 className="schedule-current-time-line"
                 style={{ top: `${currentLineTop}px`, left: `${TIME_GUTTER_WIDTH}px` }}
@@ -185,9 +187,17 @@ function RoomScheduleGrid({
                       className={`schedule-slot schedule-slot-${state} ${isHourMark ? 'is-hour-line' : ''}`}
                       style={{ gridRow: rowIndex + 1, gridColumn: colIndex + 2 }}
                       disabled={!isInteractive || selectionLocked}
-                      aria-label={`${column.room.name} ${slot.startTime}`}
+                      aria-label={`${column.room.name}, ${column.dateKey}, ${slot.startTime} to ${slot.endTime}`}
+                      aria-pressed={state === 'selected'}
+                      title={`${slot.startTime}–${slot.endTime}`}
                       onClick={() => onToggleSlot(column.dateKey, column.room.id, slot.startTime)}
-                    />
+                    >
+                      {state === 'selected' && (
+                        <span className="schedule-slot-time-label">
+                          {slot.startTime}–{slot.endTime}
+                        </span>
+                      )}
+                    </button>
                   )
                 }),
               )}

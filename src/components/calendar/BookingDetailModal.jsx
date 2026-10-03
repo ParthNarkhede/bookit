@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { formatDisplayDate, formatTimeRange } from '../../utils/dateHelpers'
+import { isBookingPast } from '../../utils/slotHelpers'
 import { formatDisplayName } from '../../utils/validators'
 
 function BookingDetailModal({
@@ -24,6 +25,7 @@ function BookingDetailModal({
   const canManage = isAdmin || isOwner
   const isConfirmed = booking.status === 'confirmed'
   const isHold = booking.status === 'hold'
+  const isPastMeeting = isConfirmed && isBookingPast(booking.date, booking.endTime)
   const displayUserName = formatDisplayName(booking.userName)
 
   const handleSave = async () => {
@@ -88,7 +90,7 @@ function BookingDetailModal({
           )}
         </dl>
 
-        {canManage && isConfirmed && !booking.isMasked && (
+        {canManage && isConfirmed && !isPastMeeting && !booking.isMasked && (
           <div className="booking-detail-edit">
             {isEditing ? (
               <>
@@ -127,7 +129,7 @@ function BookingDetailModal({
 
         {canManage && !booking.isMasked && (
           <div className="booking-detail-actions">
-            {isConfirmed && (
+            {isConfirmed && !isPastMeeting && (
               <button
                 type="button"
                 className="edit-timing"
@@ -137,14 +139,16 @@ function BookingDetailModal({
                 Edit timings
               </button>
             )}
-            <button
-              type="button"
-              className="nav-button danger-button"
-              disabled={isProcessing}
-              onClick={() => onDelete(booking)}
-            >
-              {isHold ? 'Release hold' : 'Delete booking'}
-            </button>
+            {(!isPastMeeting || isHold) && (
+              <button
+                type="button"
+                className="nav-button danger-button"
+                disabled={isProcessing}
+                onClick={() => onDelete(booking)}
+              >
+                {isHold ? 'Release hold' : 'Delete booking'}
+              </button>
+            )}
           </div>
         )}
       </div>

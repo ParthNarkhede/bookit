@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { getMonthMatrix, toDateKey } from '../../utils/dateHelpers'
-import { isPastDate } from '../../utils/slotHelpers'
+import { getMonthMatrix } from '../../utils/dateHelpers'
+import { getCurrentISTDateKey, isPastDate } from '../../utils/slotHelpers'
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -80,7 +80,7 @@ function SideCalendar({ selectedDateKey, onSelectDate }) {
       <button
         type="button"
         className="text-button side-calendar-today"
-        onClick={() => onSelectDate(toDateKey(new Date()))}
+        onClick={() => onSelectDate(getCurrentISTDateKey())}
       >
         Go to today
       </button>
