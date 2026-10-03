@@ -479,7 +479,8 @@
 .contributors-footer-inner a:focus-visible {
   color: #d11f7a;
   text-decoration: none;
-  box-shadow: 0 4px 14px rgba(209, 31, 122, 0.28);
+  /* box-shadow: 0 4px 14px rgba(209, 31, 122, 0.28); */
+  text-decoration: underline;
 }
 
 .inline-button {
