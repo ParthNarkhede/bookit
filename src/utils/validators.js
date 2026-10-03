@@ -32,7 +32,7 @@ export function validatePasswordMatch(password, confirmPassword) {
   }
 
   if (password !== confirmPassword) {
-    return 'Passwords do not match.'
+    return 'Details do not match.'
   }
 
   return null
