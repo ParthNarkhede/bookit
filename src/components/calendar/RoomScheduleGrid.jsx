@@ -316,7 +316,7 @@ function RoomScheduleGrid({
                           type="button"
                           className={`schedule-booking-block schedule-booking-${booking.status} ${
                             booking.isHold ? 'is-hold' : ''
-                          } ${booking.isBusy ? 'is-busy' : ''}`}
+                          } ${booking.isBusy ? 'is-busy' : ''} ${booking.teams?.length ? 'has-teams' : ''}`}
                           style={{ top: blockStyle.top, height: blockStyle.height }}
                           disabled={!canClick}
                           onClick={() => onBookingClick?.(booking)}
@@ -325,6 +325,11 @@ function RoomScheduleGrid({
                           <span>
                             {booking.startTime} – {booking.endTime}
                           </span>
+                          {booking.teams?.length > 0 && (
+                            <small className="schedule-booking-teams">
+                              Teams: {booking.teams.join(', ')}
+                            </small>
+                          )}
                           {displayUserName ? (
                             <small>
                               {isAdmin

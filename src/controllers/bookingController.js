@@ -216,7 +216,7 @@ export async function createSlotHold({
   return { success: true, hold: savedHold }
 }
 
-export async function confirmSlotHold({ holdId, title }) {
+export async function confirmSlotHold({ holdId, title, teams = [] }) {
   const trimmedTitle = title?.trim()
 
   if (!trimmedTitle) {
@@ -235,6 +235,7 @@ export async function confirmSlotHold({ holdId, title }) {
 
   await updateBooking(holdId, {
     title: trimmedTitle,
+    teams: [...new Set(teams.filter((team) => typeof team === 'string').map((team) => team.trim()).filter(Boolean))],
     status: BOOKING_STATUS.CONFIRMED,
     holdExpiresAt: null,
   })
@@ -331,6 +332,40 @@ export async function updateBookingTitle(bookingId, title, user, isAdmin = false
     return { success: true }
   } catch {
     return { success: false, error: 'Unable to update booking.' }
+  }
+}
+
+export async function updateBookingTeams(bookingId, teams, user, isAdmin = false) {
+  const normalizedTeams = [...new Set(
+    (Array.isArray(teams) ? teams : [])
+      .filter((team) => typeof team === 'string')
+      .map((team) => team.trim())
+      .filter(Boolean),
+  )]
+
+  try {
+    const booking = await getBookingById(bookingId)
+
+    if (!booking) {
+      return { success: false, error: 'Booking not found.' }
+    }
+
+    if (!isAdmin && booking.userId !== user.uid) {
+      return { success: false, error: 'You can only edit your own bookings.' }
+    }
+
+    if (booking.status !== BOOKING_STATUS.CONFIRMED) {
+      return { success: false, error: 'Only confirmed bookings can be edited.' }
+    }
+
+    if (isBookingPast(booking.date, booking.endTime)) {
+      return { success: false, error: 'Past bookings cannot be edited.' }
+    }
+
+    await updateBooking(bookingId, { teams: normalizedTeams })
+    return { success: true }
+  } catch {
+    return { success: false, error: 'Unable to update booking teams.' }
   }
 }
 

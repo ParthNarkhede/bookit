@@ -15,9 +15,11 @@ import {
   releaseSlotHold,
   subscribeToCalendarBookings,
   updateBookingSchedule,
+  updateBookingTeams,
   updateBookingTitle,
 } from '../controllers/bookingController'
 import { subscribeToActiveRooms } from '../controllers/roomController'
+import { subscribeToTeams } from '../services/teamService'
 import { formatDisplayDate, getWeekDateKeys } from '../utils/dateHelpers'
 import { getDashboardRoute } from '../utils/dashboardRoutes'
 import {
@@ -40,6 +42,7 @@ function CalendarPage({ user }) {
   const [viewMode, setViewMode] = useState('daily')
   const [sideCalendarMonthResetKey, setSideCalendarMonthResetKey] = useState(0)
   const [rooms, setRooms] = useState([])
+  const [teamOptions, setTeamOptions] = useState([])
   const [bookings, setBookings] = useState([])
   const [editingBooking, setEditingBooking] = useState(location.state?.booking || null)
   const [selection, setSelection] = useState(() => {
@@ -63,6 +66,7 @@ function CalendarPage({ user }) {
   const [roomDetails, setRoomDetails] = useState(null)
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [title, setTitle] = useState(location.state?.title || location.state?.booking?.title || '')
+  const [selectedTeams, setSelectedTeams] = useState([])
   const [message, setMessage] = useState(location.state?.rescheduleMessage || '')
   const [errorMessage, setErrorMessage] = useState('')
   const [modalError, setModalError] = useState('')
@@ -118,6 +122,14 @@ function CalendarPage({ user }) {
   }, [])
 
   useEffect(() => {
+    const unsubscribe = subscribeToTeams(setTeamOptions, () => {
+      setErrorMessage('Unable to load team options. Contact an admin.')
+    })
+
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
     const unsubscribe = subscribeToCalendarBookings(
       subscriptionRange.start,
       subscriptionRange.end,
@@ -163,6 +175,7 @@ function CalendarPage({ user }) {
 
     setIsPopupOpen(false)
     setTitle('')
+    setSelectedTeams([])
     setErrorMessage('')
 
     if (expired) {
@@ -415,6 +428,7 @@ function CalendarPage({ user }) {
     const result = await confirmSlotHold({
       holdId: activeHold.id,
       title,
+      teams: selectedTeams,
     })
 
     if (!result.success) {
@@ -426,6 +440,7 @@ function CalendarPage({ user }) {
     setActiveHold(null)
     setIsPopupOpen(false)
     setTitle('')
+    setSelectedTeams([])
     setIsSubmitting(false)
     setMessage('Meeting booked successfully.')
   }
@@ -481,6 +496,23 @@ function CalendarPage({ user }) {
 
     setSelectedBooking(null)
     setMessage('Booking updated successfully.')
+    return result
+  }
+
+  const handleSaveBookingTeams = async (bookingId, teams) => {
+    setIsProcessingBooking(true)
+    setModalError('')
+
+    const result = await updateBookingTeams(bookingId, teams, user, isAdmin)
+
+    setIsProcessingBooking(false)
+    if (!result.success) {
+      setModalError(result.error)
+      return result
+    }
+
+    setSelectedBooking(null)
+    setMessage('Booking teams updated successfully.')
     return result
   }
 
@@ -540,6 +572,7 @@ function CalendarPage({ user }) {
         <span className="legend-item legend-selected" role="listitem">Selected</span>
         <span className="legend-item legend-hold" role="listitem">On hold</span>
         <span className="legend-item legend-busy" role="listitem">Booked</span>
+        <span className="legend-item legend-own-booking" role="listitem">Your booking</span>
       </div>
 
       <section className="calendar-main-layout">
@@ -616,6 +649,9 @@ function CalendarPage({ user }) {
         roomLocation={activeHold?.roomLocation}
         title={title}
         onTitleChange={setTitle}
+        teamOptions={teamOptions}
+        selectedTeams={selectedTeams}
+        onTeamsChange={setSelectedTeams}
         onConfirm={handleConfirmBooking}
         onCancel={handleClosePopup}
         isSubmitting={isSubmitting}
@@ -629,6 +665,7 @@ function CalendarPage({ user }) {
         onClose={() => setSelectedBooking(null)}
         onDelete={handleDeleteBooking}
         onSaveTitle={handleSaveBookingTitle}
+        onSaveTeams={handleSaveBookingTeams}
         onReschedule={handleRescheduleBooking}
         isProcessing={isProcessingBooking}
         errorMessage={modalError}

@@ -47,6 +47,11 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /teams/{teamId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
     match /bookings/{bookingId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()

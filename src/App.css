@@ -3,6 +3,18 @@
   background: var(--dc-page-bg);
 }
 
+.page-shell:has(.has-contributors-footer) {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-shell.has-contributors-footer {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  padding-bottom: 0;
+}
+
 .navbar {
   display: flex;
   align-items: center;
@@ -345,15 +357,24 @@
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: rgba(15, 23, 42, 0.45);
   z-index: 1000;
 }
 
 .popup-card {
   width: min(420px, 100%);
+  /* box-sizing: border-box;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  flex: 0 0 auto;
+  margin-block: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain; */
   background: #fff;
   border-radius: 20px;
   padding: 28px 24px;
@@ -419,6 +440,46 @@
 
 .dashboard-action-card h2 {
   margin: 8px 0 0;
+}
+
+.contributors-footer {
+  width: 100vw;
+  box-sizing: border-box;
+  margin: auto 0 0 calc(50% - 50vw);
+  border-top: 4px solid #e5e7eb;
+  background: #fff;
+  margin-top: 48px;
+}
+
+.contributors-footer-inner {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 20px;
+  padding: 14px 32px;
+}
+
+.contributors-footer-inner h2 {
+  margin: 0;
+  color: #2b2940;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.contributors-footer-inner a {
+  width: fit-content;
+  justify-self: center;
+  color: #d11f7a;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.contributors-footer-inner a:hover,
+.contributors-footer-inner a:focus-visible {
+  color: #d11f7a;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(209, 31, 122, 0.28);
 }
 
 .inline-button {
@@ -818,6 +879,53 @@
   gap: 8px;
   font-weight: 600;
   color: #374151;
+}
+
+.booking-team-select {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.booking-team-select legend {
+  padding: 0 4px;
+  font-weight: 700;
+}
+
+.booking-team-select legend span {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.booking-team-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.booking-form .booking-team-option,
+.booking-team-edit-options .booking-team-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.booking-form .booking-team-option input,
+.booking-team-edit-options .booking-team-option input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  accent-color: #d11f7a;
 }
 
 .calendar-main-layout {
@@ -1254,7 +1362,8 @@
 
 .legend-selected::before {
   border-color: #2563eb;
-  background: #bfdbfe;
+  /* background: #bfdbfe; */
+  background: rgba(37, 99, 235, 0.18);
 }
 
 .legend-hold::before {
@@ -1265,6 +1374,13 @@
 .legend-busy::before {
   border-color: #94a3b8;
   background: #cbd5e1;
+}
+
+.legend-own-booking::before {
+  /* border-color: #059669; */
+  /* background: #a7f3d0; */
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.12)
 }
 
 /* ── Unified schedule grid ── */
@@ -1596,6 +1712,22 @@
   text-overflow: ellipsis;
 }
 
+.schedule-booking-block .schedule-booking-teams {
+  font-weight: 700;
+}
+
+.schedule-booking-block.has-teams {
+  gap: 0;
+  padding: 2px 6px;
+}
+
+.schedule-booking-block.has-teams strong,
+.schedule-booking-block.has-teams span,
+.schedule-booking-block.has-teams small {
+  font-size: 0.64rem;
+  line-height: 1;
+}
+
 .schedule-booking-hold,
 .schedule-booking-block.is-hold {
   border-left-color: #f59e0b;
@@ -1660,6 +1792,8 @@
 }
 
 .booking-detail-edit {
+  display: grid;
+  gap: 16px;
   margin-top: 18px;
 }
 
@@ -1739,6 +1873,63 @@
   margin: 0 0 8px;
   color: #475569;
   font-weight: 600;
+}
+
+.team-management-section h2 {
+  margin: 0 0 16px;
+}
+
+.team-management-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px 16px;
+}
+
+.team-management-form label {
+  grid-column: 1 / -1;
+  color: #374151;
+  font-weight: 600;
+}
+
+.team-management-form input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 11px 12px;
+  font: inherit;
+}
+
+.team-management-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.team-management-list {
+  display: grid;
+}
+
+.team-management-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 48px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.team-management-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.team-management-name span {
+  color: #64748b;
+  font-size: 0.78rem;
 }
 
 .manage-rooms-toolbar {
@@ -2144,6 +2335,10 @@
     grid-template-columns: 1fr;
   }
 
+  .team-management-form {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-action-card {
     flex-direction: column;
     align-items: flex-start;
@@ -2167,6 +2362,20 @@
 
   .dashboard-meta {
     grid-template-columns: 1fr;
+  }
+
+  .contributors-footer-inner {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .contributors-footer-inner a {
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .contributors-footer-inner h2 {
+    font-size: 0.9rem;
   }
 }
 
