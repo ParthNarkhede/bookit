@@ -633,6 +633,7 @@ function CalendarPage({ user }) {
             onRoomDetailsClick={setRoomDetails}
             onSlotDragSelect={handleSetDragSelection}
             selectionLocked={Boolean(activeHold) || isPlacingHold || isSavingEdit}
+            scrollKey={`${selectedDateKey}:${viewMode}`}
           />
 
           {errorMessage && <p className="auth-message error">{errorMessage}</p>}

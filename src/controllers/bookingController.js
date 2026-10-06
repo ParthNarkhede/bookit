@@ -20,7 +20,7 @@ import {
   doTimesOverlap,
   isBookingActive,
   isBookingPast,
-  isSlotInPast,
+  hasSlotEnded,
   isWithinBookingWindow,
   isWeekendDate,
 } from '../utils/slotHelpers'
@@ -48,8 +48,8 @@ function getScheduleError(dateKey, startTime, endTime) {
     return 'Bookings are available between 08:00 and 20:00 IST.'
   }
 
-  if (isSlotInPast(dateKey, startTime)) {
-    return 'You cannot book a slot that has already started.'
+  if (hasSlotEnded(dateKey, startTime)) {
+    return 'You cannot book a slot that has already ended.'
   }
 
   return ''

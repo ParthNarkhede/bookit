@@ -173,7 +173,7 @@ export function getSlotState({
     return 'closed'
   }
 
-  if (isSlotInPast(dateKey, startTime)) {
+  if (hasSlotEnded(dateKey, startTime)) {
     return 'past'
   }
 

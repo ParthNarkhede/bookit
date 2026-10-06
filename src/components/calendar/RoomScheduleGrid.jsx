@@ -32,6 +32,7 @@ function RoomScheduleGrid({
   onRoomDetailsClick,
   onSlotDragSelect,
   selectionLocked,
+  scrollKey,
 }) {
   const scrollRef = useRef(null)
   const dragRoomRef = useRef(null)
@@ -42,7 +43,7 @@ function RoomScheduleGrid({
     [],
   )
   const todayKey = getCurrentISTDateKey()
-  const showCurrentTime = dateKeys.includes(todayKey)
+  const showCurrentTime = dateKeys.some((dateKey) => dateKey >= todayKey)
   const currentMinutes = getCurrentMinutes()
 
   useEffect(() => {
@@ -55,10 +56,11 @@ function RoomScheduleGrid({
   }, [showCurrentTime])
 
   useScrollToCurrentTime({
-    enabled: showCurrentTime,
+    enabled: showCurrentTime && rooms.length > 0,
     slotHeightPx: SLOT_HEIGHT_PX,
     containerRef: scrollRef,
     currentMinutes,
+    scrollKey,
   })
 
   const columns = useMemo(

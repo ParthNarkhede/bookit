@@ -6,6 +6,7 @@ export function useScrollToCurrentTime({
   slotHeightPx,
   containerRef,
   currentMinutes,
+  scrollKey,
 }) {
   const hasScrolledRef = useRef(false)
 
@@ -45,7 +46,7 @@ export function useScrollToCurrentTime({
     })
 
     return () => window.cancelAnimationFrame(frameId)
-  }, [containerRef, currentMinutes, enabled, slotHeightPx])
+  }, [containerRef, currentMinutes, enabled, scrollKey, slotHeightPx])
 }
 
 export function useCurrentTimeTick(intervalMs = 30000) {
