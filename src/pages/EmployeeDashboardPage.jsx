@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardActionCard from '../components/dashboard/DashboardActionCard'
+import ContributorsFooter from '../components/dashboard/ContributorsFooter'
 import { formatDisplayName } from '../utils/validators'
 import BookingDetailModal from '../components/calendar/BookingDetailModal'
 import { GroupedBookingList } from '../components/calendar/BookingList'
@@ -9,6 +10,7 @@ import {
   fetchEmployeeBookings,
   groupBookingsByDate,
   rescheduleBooking,
+  updateBookingTeams,
   updateBookingTitle,
 } from '../controllers/bookingController'
 import { isSlotInPast } from '../utils/slotHelpers'
@@ -97,8 +99,24 @@ function EmployeeDashboardPage({ user }) {
     return result
   }
 
+  const handleSaveTeams = async (bookingId, teams) => {
+    setIsProcessing(true)
+    const result = await updateBookingTeams(bookingId, teams, user, false)
+    setIsProcessing(false)
+
+    if (!result.success) {
+      setModalError(result.error)
+      return result
+    }
+
+    setSelectedBooking(null)
+    setMessage('Teams updated.')
+    loadBookings()
+    return result
+  }
+
   return (
-    <main className="dashboard-shell">
+    <main className="dashboard-shell has-contributors-footer">
       <header className="dashboard-page-header">
         <p className="eyebrow">Employee dashboard</p>
         <h1>Hello, {formatDisplayName(user.name)}</h1>
@@ -106,7 +124,7 @@ function EmployeeDashboardPage({ user }) {
       </header>
 
       <DashboardActionCard
-        title="Proceed to calendar"
+        title="Proceed to book a meeting room"
         description="Pick an available slot and schedule your next meeting in a few clicks."
         buttonLabel="Open calendar"
         to="/calendar"
@@ -164,10 +182,13 @@ function EmployeeDashboardPage({ user }) {
         onClose={() => setSelectedBooking(null)}
         onDelete={handleDelete}
         onSaveTitle={handleSaveTitle}
+        onSaveTeams={handleSaveTeams}
         onReschedule={handleReschedule}
         isProcessing={isProcessing}
         errorMessage={modalError}
       />
+
+      <ContributorsFooter />
     </main>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ErrorPopup from '../components/ErrorPopup'
+import PasswordField from '../components/PasswordField'
 import { loginUser } from '../controllers/authController'
 
 function LoginPage({ onLoginSuccess }) {
@@ -58,18 +59,14 @@ function LoginPage({ onLoginSuccess }) {
               />
             </label>
 
-            <label htmlFor="login-password">
-              Password
-              <input
-                id="login-password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Enter your password"
-                required
-              />
-            </label>
+            <PasswordField
+              id="login-password"
+              label="Password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter your password"
+            />
 
             <button type="submit" className="primary-button" disabled={isSubmitting}>
               {isSubmitting ? 'Signing in...' : 'Sign in'}

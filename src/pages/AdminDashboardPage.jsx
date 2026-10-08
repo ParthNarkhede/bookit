@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardActionCard from '../components/dashboard/DashboardActionCard'
+import ContributorsFooter from '../components/dashboard/ContributorsFooter'
 import { formatDisplayName } from '../utils/validators'
 import MonthStripCalendar from '../components/calendar/MonthStripCalendar'
 import BookingFilters from '../components/calendar/BookingFilters'
@@ -13,6 +14,7 @@ import {
   groupBookingsByEmployee,
   groupBookingsByDate,
   rescheduleBooking,
+  updateBookingTeams,
   updateBookingTitle,
 } from '../controllers/bookingController'
 import { subscribeToActiveRooms } from '../controllers/roomController'
@@ -27,6 +29,7 @@ function AdminDashboardPage({ user }) {
   const [bookings, setBookings] = useState([])
   const [myBookings, setMyBookings] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [hasLoadedBookings, setHasLoadedBookings] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [message, setMessage] = useState('')
   const [modalError, setModalError] = useState('')
@@ -52,6 +55,7 @@ function AdminDashboardPage({ user }) {
       setMyBookings([])
     } finally {
       setIsLoading(false)
+      setHasLoadedBookings(true)
     }
   }
 
@@ -118,8 +122,24 @@ function AdminDashboardPage({ user }) {
     return result
   }
 
+  const handleSaveTeams = async (bookingId, teams) => {
+    setIsProcessing(true)
+    const result = await updateBookingTeams(bookingId, teams, user, true)
+    setIsProcessing(false)
+
+    if (!result.success) {
+      setModalError(result.error)
+      return result
+    }
+
+    setSelectedBooking(null)
+    setMessage('Booking teams updated.')
+    loadBookings()
+    return result
+  }
+
   return (
-    <main className="dashboard-shell admin-dashboard-shell calendar-page-wide">
+    <main className="dashboard-shell admin-dashboard-shell calendar-page-wide has-contributors-footer">
       <header className="dashboard-page-header">
         <p className="eyebrow">Admin dashboard</p>
         <h1>Hello, {formatDisplayName(user.name)}</h1>
@@ -127,7 +147,7 @@ function AdminDashboardPage({ user }) {
       </header>
 
       <DashboardActionCard
-        title="Proceed to calendar"
+        title="Proceed to book a meeting room"
         description="Open the booking calendar to reserve slots or review availability."
         buttonLabel="Open calendar"
         to="/calendar"
@@ -148,6 +168,13 @@ function AdminDashboardPage({ user }) {
       />
 
       <DashboardActionCard
+        title="Manage teams"
+        description="Add and update teams employees can associate with bookings."
+        buttonLabel="Manage teams"
+        to="/admin/teams"
+      />
+
+      <DashboardActionCard
         title="Analytics & export"
         description="View room usage charts and export booking history to Excel."
         buttonLabel="Open analytics"
@@ -164,7 +191,7 @@ function AdminDashboardPage({ user }) {
 
         {message && <p className="auth-message success">{message}</p>}
 
-        {isLoading ? (
+        {isLoading && !hasLoadedBookings ? (
           <p className="empty-state">Loading your meetings...</p>
         ) : (
           <GroupedBookingList
@@ -187,7 +214,7 @@ function AdminDashboardPage({ user }) {
           </div>
         </div>
 
-        {isLoading ? (
+        {isLoading && !hasLoadedBookings ? (
           <p className="empty-state">Loading booking history...</p>
         ) : (
           <GroupedBookingList
@@ -221,7 +248,7 @@ function AdminDashboardPage({ user }) {
 
           {message && <p className="auth-message success">{message}</p>}
 
-          {isLoading ? (
+          {isLoading && !hasLoadedBookings ? (
             <p className="empty-state">Loading bookings...</p>
           ) : groupedEmployees.length ? (
             <div className="employee-booking-groups">
@@ -257,10 +284,13 @@ function AdminDashboardPage({ user }) {
         onClose={() => setSelectedBooking(null)}
         onDelete={handleDelete}
         onSaveTitle={handleSaveTitle}
+        onSaveTeams={handleSaveTeams}
         onReschedule={handleReschedule}
         isProcessing={isProcessing}
         errorMessage={modalError}
       />
+
+      <ContributorsFooter />
     </main>
   )
 }

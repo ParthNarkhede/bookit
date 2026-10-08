@@ -28,6 +28,7 @@ function Navbar({ user, onLogout }) {
           <>
             <Link to="/admin/rooms">Rooms</Link>
             <Link to="/admin/users">Users</Link>
+            <Link to="/admin/teams">Teams</Link>
             <Link to="/admin/analytics">Analytics</Link>
           </>
         )}
