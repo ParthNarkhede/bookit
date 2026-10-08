@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react'
-import { DAY_END_HOUR, DAY_START_HOUR } from '../constants/booking'
-import { getCurrentMinutes } from '../utils/slotHelpers'
+import { DAY_END_HOUR, DAY_START_HOUR, SLOT_INTERVAL_MINUTES } from '../constants/booking'
 
 export function useScrollToCurrentTime({
   enabled,
   slotHeightPx,
   containerRef,
   currentMinutes,
+  scrollKey,
 }) {
   const hasScrolledRef = useRef(false)
 
@@ -17,26 +17,43 @@ export function useScrollToCurrentTime({
 
     const startMinutes = DAY_START_HOUR * 60
     const endMinutes = DAY_END_HOUR * 60
-    const clampedMinutes = Math.min(Math.max(currentMinutes, startMinutes), endMinutes)
-    const offsetSlots = Math.max(0, (clampedMinutes - startMinutes) / 15 - 2)
-    const scrollTop = offsetSlots * slotHeightPx
+    if (currentMinutes < startMinutes || currentMinutes >= endMinutes) {
+      return undefined
+    }
+
+    const body = containerRef.current.querySelector('.schedule-body-wrap')
+    if (!body) {
+      return undefined
+    }
+
+    const lineOffset =
+      ((currentMinutes - startMinutes) / SLOT_INTERVAL_MINUTES) * slotHeightPx
 
     const frameId = window.requestAnimationFrame(() => {
-      containerRef.current?.scrollTo({
-        top: scrollTop,
+      const container = containerRef.current
+      if (!container) {
+        return
+      }
+
+      const containerTop = container.getBoundingClientRect().top
+      const bodyTop = body.getBoundingClientRect().top
+      const scrollTop = container.scrollTop + bodyTop - containerTop + lineOffset
+      container.scrollTo({
+        top: scrollTop - container.clientHeight / 2,
         behavior: hasScrolledRef.current ? 'smooth' : 'auto',
       })
       hasScrolledRef.current = true
     })
 
     return () => window.cancelAnimationFrame(frameId)
-  }, [containerRef, currentMinutes, enabled, slotHeightPx])
+  }, [containerRef, currentMinutes, enabled, scrollKey, slotHeightPx])
 }
 
 export function useCurrentTimeTick(intervalMs = 30000) {
-  const tickRef = useRef(Date.now())
+  const tickRef = useRef(0)
 
   useEffect(() => {
+    tickRef.current = Date.now()
     const intervalId = window.setInterval(() => {
       tickRef.current = Date.now()
     }, intervalMs)

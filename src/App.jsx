@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage'
 import EmployeeDashboardPage from './pages/EmployeeDashboardPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import ManageRoomsPage from './pages/ManageRoomsPage'
+import ManageTeamsPage from './pages/ManageTeamsPage'
 import ManageUsersPage from './pages/ManageUsersPage'
 import AdminAnalyticsPage from './pages/AdminAnalyticsPage'
 import CalendarPage from './pages/CalendarPage'
@@ -140,6 +141,15 @@ function App() {
           element={
             <ProtectedRoute user={user} allowedRoles={['admin']}>
               <ManageRoomsPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/teams"
+          element={
+            <ProtectedRoute user={user} allowedRoles={['admin']}>
+              <ManageTeamsPage user={user} />
             </ProtectedRoute>
           }
         />

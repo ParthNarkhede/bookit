@@ -10,6 +10,9 @@ function BookingConfirmPopup({
   roomLocation,
   title,
   onTitleChange,
+  teamOptions,
+  selectedTeams,
+  onTeamsChange,
   onConfirm,
   onCancel,
   isSubmitting,
@@ -77,6 +80,32 @@ function BookingConfirmPopup({
               required
             />
           </label>
+
+          <fieldset className="booking-team-select">
+            <legend>Add teams <span>(optional)</span></legend>
+            {teamOptions.length > 0 ? (
+              <div className="booking-team-options">
+                {teamOptions.map((team) => (
+                  <label key={team.id} className="booking-team-option">
+                    <input
+                      type="checkbox"
+                      checked={selectedTeams.includes(team.name)}
+                      onChange={(event) => {
+                        onTeamsChange(
+                          event.target.checked
+                            ? [...selectedTeams, team.name]
+                            : selectedTeams.filter((selectedTeam) => selectedTeam !== team.name),
+                        )
+                      }}
+                    />
+                    {team.name}
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="booking-team-empty">No teams available.</p>
+            )}
+          </fieldset>
 
           {errorMessage && <p className="auth-message error">{errorMessage}</p>}
 
