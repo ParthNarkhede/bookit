@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ErrorPopup from '../components/ErrorPopup'
+import PasswordField from '../components/PasswordField'
 import { registerUser } from '../controllers/authController'
 
 function SetupPage({ onSetupSuccess }) {
@@ -69,31 +70,23 @@ function SetupPage({ onSetupSuccess }) {
               />
             </label>
 
-            <label htmlFor="setup-password">
-              Set password
-              <input
-                id="setup-password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Create a password"
-                required
-              />
-            </label>
+            <PasswordField
+              id="setup-password"
+              label="Set password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Create a password"
+            />
 
-            <label htmlFor="setup-confirm-password">
-              Confirm password
-              <input
-                id="setup-confirm-password"
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                placeholder="Re-enter your password"
-                required
-              />
-            </label>
+            <PasswordField
+              id="setup-confirm-password"
+              label="Confirm password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="Re-enter your password"
+            />
 
             <button type="submit" className="primary-button" disabled={isSubmitting}>
               {isSubmitting ? 'Creating account...' : 'Save and continue'}

@@ -84,7 +84,7 @@ export async function registerUser(email, password, confirmPassword) {
     if (!eligible) {
       return {
         success: false,
-        error: 'This email is not authorized to set up an account. Contact your administrator to add you as a user first.',
+        error: 'This email is not authorized to set up an account. Contact your administrator.',
       }
     }
 
